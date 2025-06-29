@@ -40,16 +40,17 @@ namespace Appointment_System.Middleware
             context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
 
             var response = _env.IsDevelopment()
-                ? new
+                ? new ErrorResponse
                 {
-                    status = context.Response.StatusCode,
-                    message = exception.Message,
-                    detail = exception.ToString()
+                    Status = context.Response.StatusCode,
+                    Message = exception.Message,
+                    Detail = exception.ToString()
                 }
-                : new
+                : new ErrorResponse
                 {
-                    status = context.Response.StatusCode,
-                    message = "An internal server error occurred."
+                    Status = context.Response.StatusCode,
+                    Message = "An internal server error occurred.",
+                    Detail = null
                 };
 
             var jsonOptions = new JsonSerializerOptions
@@ -60,6 +61,13 @@ namespace Appointment_System.Middleware
             var json = JsonSerializer.Serialize(response, jsonOptions);
             return context.Response.WriteAsync(json);
         }
+    }
+
+    public class ErrorResponse
+    {
+        public int Status { get; set; }
+        public string Message { get; set; } = string.Empty;
+        public string? Detail { get; set; }
     }
 
     // Extension method to add the middleware to the request pipeline
