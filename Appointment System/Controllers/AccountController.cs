@@ -35,15 +35,20 @@ namespace Appointment_System.Controllers
                 {
                     UserName = model.Email,
                     Email = model.Email,
-                    FullName = model.FullName
+                    FullName = model.FullName,
+                    Address = "Your Address",
+                    BusinessName = "Your Business Name",
+                    BusinessDescription = "Your Business Description",
+                    ProfilePictureUrl = "",
+                    IsServiceProvider = model.Role=="ServiceProvider"
                 };
 
                 var result = await _userManager.CreateAsync(user, model.Password);
                 
                 if (result.Succeeded)
                 {
+                    await _userManager.AddToRoleAsync(user, model.Role);
                     _logger.LogInformation("User created successfully: {UserId}", user.Id);
-                    await _signInManager.SignInAsync(user, isPersistent: false);
                     _logger.LogInformation("User signed in after registration: {UserId}", user.Id);
                     return Ok(new { message = "User registered successfully" });
                 }
