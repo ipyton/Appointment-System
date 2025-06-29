@@ -2,13 +2,28 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Appointment_System.Data;
 using Appointment_System.Models;
+using Appointment_System.Services;
+using Appointment_System.Middleware;
+using Microsoft.Extensions.Logging;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Configure logging
+builder.Logging.ClearProviders();
+builder.Logging.AddConsole();
+builder.Logging.AddDebug();
+builder.Logging.AddFile(options =>
+{
+    builder.Configuration.GetSection("Logging:File").Bind(options);
+});
 
 // 配置数据库
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(connectionString));
+
+// Register the DatabaseLoggerService
+builder.Services.AddScoped<DatabaseLoggerService>();
 
 // 配置Identity
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options => {
@@ -46,12 +61,30 @@ builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
+// Get logger factory
+var loggerFactory = app.Services.GetRequiredService<ILoggerFactory>();
+var logger = loggerFactory.CreateLogger("Appointment_System.Program");
+
+// Log application startup
+logger.LogInformation("Application starting up");
+
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
+    logger.LogInformation("Running in Development environment");
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+else
+{
+    logger.LogInformation("Running in Production environment");
+}
+
+// Add global exception handling middleware (should be first in the pipeline)
+app.UseGlobalExceptionHandling();
+
+// Add request logging middleware
+app.UseRequestLogging();
 
 app.UseHttpsRedirection();
 
@@ -92,6 +125,7 @@ using (var scope = app.Services.CreateScope())
     var services = scope.ServiceProvider;
     try
     {
+        logger.LogInformation("Ensuring database is created");
         var context = services.GetRequiredService<ApplicationDbContext>();
         context.Database.EnsureCreated();
         
@@ -100,26 +134,31 @@ using (var scope = app.Services.CreateScope())
         var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
         
         // 初始化默认角色和用户
+        logger.LogInformation("Initializing default roles and users");
         InitializeAsync(userManager, roleManager).Wait();
+        logger.LogInformation("Database initialization completed successfully");
     }
     catch (Exception ex)
     {
-        var logger = services.GetRequiredService<ILogger<Program>>();
-        logger.LogError(ex, "Error creating database");
+        logger.LogError(ex, "Error during database initialization");
     }
 }
 
+logger.LogInformation("Application started successfully");
 app.Run();
 
 // 初始化默认角色和管理员用户的方法
 async Task InitializeAsync(UserManager<ApplicationUser> userManager, RoleManager<IdentityRole> roleManager)
 {
+    var initLogger = loggerFactory.CreateLogger("Appointment_System.Initialization");
+    
     // 创建角色（如果不存在）
     string[] roleNames = { "Admin", "User" };
     foreach (var roleName in roleNames)
     {
         if (!await roleManager.RoleExistsAsync(roleName))
         {
+            initLogger.LogInformation("Creating role: {RoleName}", roleName);
             await roleManager.CreateAsync(new IdentityRole(roleName));
         }
     }
@@ -130,6 +169,7 @@ async Task InitializeAsync(UserManager<ApplicationUser> userManager, RoleManager
     
     if (adminUser == null)
     {
+        initLogger.LogInformation("Creating admin user: {AdminEmail}", adminEmail);
         adminUser = new ApplicationUser
         {
             UserName = adminEmail,
@@ -142,7 +182,17 @@ async Task InitializeAsync(UserManager<ApplicationUser> userManager, RoleManager
         
         if (result.Succeeded)
         {
+            initLogger.LogInformation("Admin user created successfully");
             await userManager.AddToRoleAsync(adminUser, "Admin");
+            initLogger.LogInformation("Admin role assigned to user");
+        }
+        else
+        {
+            foreach (var error in result.Errors)
+            {
+                initLogger.LogError("Error creating admin user: {ErrorCode} - {ErrorDescription}", 
+                    error.Code, error.Description);
+            }
         }
     }
 }
