@@ -153,7 +153,7 @@ async Task InitializeAsync(UserManager<ApplicationUser> userManager, RoleManager
     var initLogger = loggerFactory.CreateLogger("Appointment_System.Initialization");
     
     // 创建角色（如果不存在）
-    string[] roleNames = { "Admin", "User" };
+    string[] roleNames = { "Admin", "User", "ServiceProvider" };
     foreach (var roleName in roleNames)
     {
         if (!await roleManager.RoleExistsAsync(roleName))
@@ -164,7 +164,7 @@ async Task InitializeAsync(UserManager<ApplicationUser> userManager, RoleManager
     }
 
     // 创建管理员用户（如果不存在）
-    var adminEmail = "admin@example.com";
+    var adminEmail = "czh1278341834@gmail.com";
     var adminUser = await userManager.FindByEmailAsync(adminEmail);
     
     if (adminUser == null)
@@ -174,8 +174,13 @@ async Task InitializeAsync(UserManager<ApplicationUser> userManager, RoleManager
         {
             UserName = adminEmail,
             Email = adminEmail,
-            FullName = "系统管理员",
-            EmailConfirmed = true
+            FullName = "Administrator",
+            EmailConfirmed = true,
+            Address = "unknown",
+            BusinessName = "Admin Business",
+            BusinessDescription="This is an Admin Account",
+            ProfilePictureUrl = "default.png",
+            IsServiceProvider = false,
         };
         
         var result = await userManager.CreateAsync(adminUser, "Admin@123456");
