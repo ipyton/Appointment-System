@@ -53,6 +53,16 @@ builder.Services.ConfigureApplicationCookie(options => {
     options.SlidingExpiration = true;
 });
 
+// Add CORS services
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowSpecificOrigins",
+        policy => policy
+            .AllowAnyOrigin()
+            .AllowAnyHeader()
+            .AllowAnyMethod());
+});
+
 // Add services to the container.
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddControllers();
@@ -85,6 +95,9 @@ app.UseGlobalExceptionHandling();
 
 // Add request logging middleware
 app.UseRequestLogging();
+
+// Use CORS middleware (before UseHttpsRedirection and other routing middleware)
+app.UseCors("AllowSpecificOrigins");
 
 app.UseHttpsRedirection();
 

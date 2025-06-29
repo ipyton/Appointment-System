@@ -20,9 +20,10 @@ namespace Appointment_System.Models
         [Display(Name = "Password")]
         public string Password { get; set; } = string.Empty;
 
-        [DataType(DataType.Password)]
-        [Display(Name = "Confirm Password")]
-        [Compare("Password", ErrorMessage = "Password and Confirm Password do not match")]
-        public string ConfirmPassword { get; set; } = string.Empty;
+
+
+        [Required]
+        [Display(Name = "Role")]
+        public string Role { get; set; } = "User"; // Default role is User
     }
 } 
