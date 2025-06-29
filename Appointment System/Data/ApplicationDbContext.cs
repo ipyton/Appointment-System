@@ -19,7 +19,7 @@ namespace Appointment_System.Data
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
-            
+
             // Configure relationships for ApplicationUser
             builder.Entity<ApplicationUser>()
                 .HasMany(u => u.Services)
@@ -39,7 +39,7 @@ namespace Appointment_System.Data
                 .WithOne(sa => sa.Service)
                 .HasForeignKey(sa => sa.ServiceId)
                 .OnDelete(DeleteBehavior.Cascade);
-                
+
             builder.Entity<Service>()
                 .HasMany(s => s.Appointments)
                 .WithOne(a => a.Service)
@@ -52,6 +52,9 @@ namespace Appointment_System.Data
                 .WithOne(b => b.Appointment)
                 .HasForeignKey(b => b.AppointmentId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+
+
         }
     }
 } 
