@@ -4,6 +4,7 @@ using Appointment_System.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Appointment_System.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250630133043_AddRecurringServicePattern")]
+    partial class AddRecurringServicePattern
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -218,6 +221,45 @@ namespace Appointment_System.Migrations
                     b.ToTable("Bills");
                 });
 
+            modelBuilder.Entity("Appointment_System.Models.RecurringServicePattern", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("EndDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<int?>("MaxRepetitions")
+                        .HasColumnType("int");
+
+                    b.Property<int>("RecurrenceType")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ServiceId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("StartDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ServiceId");
+
+                    b.ToTable("RecurringServicePatterns");
+                });
+
             modelBuilder.Entity("Appointment_System.Models.Service", b =>
                 {
                     b.Property<int>("Id")
@@ -282,7 +324,16 @@ namespace Appointment_System.Migrations
                     b.Property<bool>("IsAvailable")
                         .HasColumnType("bit");
 
+                    b.Property<int>("MaxAppointmentsPerSlot")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("RecurringPatternId")
+                        .HasColumnType("int");
+
                     b.Property<int>("ServiceId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("SlotIntervalMinutes")
                         .HasColumnType("int");
 
                     b.Property<TimeSpan>("StartTime")
@@ -292,79 +343,12 @@ namespace Appointment_System.Migrations
                         .HasColumnType("datetime2");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("RecurringPatternId");
 
                     b.HasIndex("ServiceId");
 
                     b.ToTable("ServiceAvailabilities");
-                });
-
-            modelBuilder.Entity("Appointment_System.Models.ServiceSchedule", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("bit");
-
-                    b.Property<int?>("RepeatWeeks")
-                        .HasColumnType("int");
-
-                    b.Property<int>("ServiceId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("SlotDurationMinutes")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("StartDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ServiceId");
-
-                    b.ToTable("ServiceSchedules");
-                });
-
-            modelBuilder.Entity("Appointment_System.Models.TimeSlot", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<TimeSpan>("EndTime")
-                        .HasColumnType("time");
-
-                    b.Property<int>("MaxConcurrentAppointments")
-                        .HasColumnType("int");
-
-                    b.Property<TimeSpan>("StartTime")
-                        .HasColumnType("time");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int>("WeeklyAvailabilityId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("WeeklyAvailabilityId");
-
-                    b.ToTable("TimeSlots");
                 });
 
             modelBuilder.Entity("Appointment_System.Models.TokenRecord", b =>
@@ -384,36 +368,6 @@ namespace Appointment_System.Migrations
                     b.HasIndex("ApplicationUserId");
 
                     b.ToTable("Tokens");
-                });
-
-            modelBuilder.Entity("Appointment_System.Models.WeeklyAvailability", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int>("DayOfWeek")
-                        .HasColumnType("int");
-
-                    b.Property<bool>("IsAvailable")
-                        .HasColumnType("bit");
-
-                    b.Property<int>("ServiceScheduleId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ServiceScheduleId");
-
-                    b.ToTable("WeeklyAvailabilities");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
@@ -583,6 +537,17 @@ namespace Appointment_System.Migrations
                     b.Navigation("Appointment");
                 });
 
+            modelBuilder.Entity("Appointment_System.Models.RecurringServicePattern", b =>
+                {
+                    b.HasOne("Appointment_System.Models.Service", "Service")
+                        .WithMany("RecurringPatterns")
+                        .HasForeignKey("ServiceId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Service");
+                });
+
             modelBuilder.Entity("Appointment_System.Models.Service", b =>
                 {
                     b.HasOne("Appointment_System.Models.ApplicationUser", "Provider")
@@ -596,35 +561,20 @@ namespace Appointment_System.Migrations
 
             modelBuilder.Entity("Appointment_System.Models.ServiceAvailability", b =>
                 {
+                    b.HasOne("Appointment_System.Models.RecurringServicePattern", "RecurringPattern")
+                        .WithMany("Availabilities")
+                        .HasForeignKey("RecurringPatternId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.HasOne("Appointment_System.Models.Service", "Service")
                         .WithMany("Availabilities")
                         .HasForeignKey("ServiceId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Service");
-                });
-
-            modelBuilder.Entity("Appointment_System.Models.ServiceSchedule", b =>
-                {
-                    b.HasOne("Appointment_System.Models.Service", "Service")
-                        .WithMany("Schedules")
-                        .HasForeignKey("ServiceId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                    b.Navigation("RecurringPattern");
 
                     b.Navigation("Service");
-                });
-
-            modelBuilder.Entity("Appointment_System.Models.TimeSlot", b =>
-                {
-                    b.HasOne("Appointment_System.Models.WeeklyAvailability", "WeeklyAvailability")
-                        .WithMany("TimeSlots")
-                        .HasForeignKey("WeeklyAvailabilityId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("WeeklyAvailability");
                 });
 
             modelBuilder.Entity("Appointment_System.Models.TokenRecord", b =>
@@ -634,17 +584,6 @@ namespace Appointment_System.Migrations
                         .HasForeignKey("ApplicationUserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-                });
-
-            modelBuilder.Entity("Appointment_System.Models.WeeklyAvailability", b =>
-                {
-                    b.HasOne("Appointment_System.Models.ServiceSchedule", "ServiceSchedule")
-                        .WithMany()
-                        .HasForeignKey("ServiceScheduleId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("ServiceSchedule");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -712,18 +651,18 @@ namespace Appointment_System.Migrations
                     b.Navigation("Bills");
                 });
 
+            modelBuilder.Entity("Appointment_System.Models.RecurringServicePattern", b =>
+                {
+                    b.Navigation("Availabilities");
+                });
+
             modelBuilder.Entity("Appointment_System.Models.Service", b =>
                 {
                     b.Navigation("Appointments");
 
                     b.Navigation("Availabilities");
 
-                    b.Navigation("Schedules");
-                });
-
-            modelBuilder.Entity("Appointment_System.Models.WeeklyAvailability", b =>
-                {
-                    b.Navigation("TimeSlots");
+                    b.Navigation("RecurringPatterns");
                 });
 #pragma warning restore 612, 618
         }

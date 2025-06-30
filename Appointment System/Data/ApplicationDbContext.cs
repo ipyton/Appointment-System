@@ -15,6 +15,9 @@ namespace Appointment_System.Data
         public DbSet<Appointment> Appointments { get; set; }
         public DbSet<Bill> Bills { get; set; }
         public DbSet<ServiceAvailability> ServiceAvailabilities { get; set; }
+        public DbSet<ServiceSchedule> ServiceSchedules { get; set; }
+        public DbSet<WeeklyAvailability> WeeklyAvailabilities { get; set; }
+        public DbSet<TimeSlot> TimeSlots { get; set; }
         public DbSet<TokenRecord> Tokens { get; set; }
         public DbSet<ApplicationUser> ApplicationUsers { get; set; }
         
@@ -47,6 +50,26 @@ namespace Appointment_System.Data
                 .WithOne(a => a.Service)
                 .HasForeignKey(a => a.ServiceId)
                 .OnDelete(DeleteBehavior.Restrict);
+                
+            builder.Entity<Service>()
+                .HasMany(s => s.Schedules)
+                .WithOne(ss => ss.Service)
+                .HasForeignKey(ss => ss.ServiceId)
+                .OnDelete(DeleteBehavior.Cascade);
+                
+            // Configure ServiceSchedule
+            builder.Entity<ServiceSchedule>()
+                .HasMany<WeeklyAvailability>()
+                .WithOne(wa => wa.ServiceSchedule)
+                .HasForeignKey(wa => wa.ServiceScheduleId)
+                .OnDelete(DeleteBehavior.Cascade);
+                
+            // Configure WeeklyAvailability
+            builder.Entity<WeeklyAvailability>()
+                .HasMany(wa => wa.TimeSlots)
+                .WithOne(ts => ts.WeeklyAvailability)
+                .HasForeignKey(ts => ts.WeeklyAvailabilityId)
+                .OnDelete(DeleteBehavior.Cascade);
 
             // Configure Appointment
             builder.Entity<Appointment>()
