@@ -4,6 +4,7 @@ using Appointment_System.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Appointment_System.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250630113432_RecreateTokensTable")]
+    partial class RecreateTokensTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -301,7 +304,7 @@ namespace Appointment_System.Migrations
             modelBuilder.Entity("Appointment_System.Models.TokenRecord", b =>
                 {
                     b.Property<string>("AccessToken")
-                        .HasColumnType("varchar(900)");
+                        .HasColumnType("varchar(2000)");
 
                     b.Property<string>("ApplicationUserId")
                         .IsRequired()
@@ -508,11 +511,13 @@ namespace Appointment_System.Migrations
 
             modelBuilder.Entity("Appointment_System.Models.TokenRecord", b =>
                 {
-                    b.HasOne("Appointment_System.Models.ApplicationUser", null)
-                        .WithMany()
+                    b.HasOne("Appointment_System.Models.ApplicationUser", "ApplicationUser")
+                        .WithMany("TokenRecords")
                         .HasForeignKey("ApplicationUserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("ApplicationUser");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -571,6 +576,8 @@ namespace Appointment_System.Migrations
                     b.Navigation("ProviderAppointments");
 
                     b.Navigation("Services");
+
+                    b.Navigation("TokenRecords");
 
                     b.Navigation("UserAppointments");
                 });
