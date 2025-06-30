@@ -38,7 +38,21 @@ namespace Appointment_System.Controllers
             _logger.LogInformation("Registration attempt for email: {Email}", model.Email);
             
             if (ModelState.IsValid)
-            {
+            {   
+                // Check if user with the same email exists
+                var existingUser = await _userManager.FindByEmailAsync(model.Email);
+                if (existingUser != null)
+                {
+                    // Check if user already has the requested role
+                    var existingRoles = await _userManager.GetRolesAsync(existingUser);
+                    if (existingRoles.Contains(model.Role))
+                    {
+                        _logger.LogWarning("Registration failed: User with email {Email} and role {Role} already exists", model.Email, model.Role);
+                        ModelState.AddModelError(string.Empty, $"A user with email {model.Email} and role {model.Role} already exists");
+                        return BadRequest(ModelState);
+                    }
+                }
+                
                 var user = new ApplicationUser
                 {
                     UserName = model.Email,
@@ -106,11 +120,11 @@ namespace Appointment_System.Controllers
                         email = user.Email,
                         fullName = user.FullName,
                         isServiceProvider = user.IsServiceProvider,
-                        roles = roles,
+                        roles = roles.FirstOrDefault(),
                         profilePictureUrl = user.ProfilePictureUrl,
                         businessName = user.BusinessName,
                         businessDescription = user.BusinessDescription,
-                        token = token
+                        token = token.AccessToken
                     });
                 }
                 

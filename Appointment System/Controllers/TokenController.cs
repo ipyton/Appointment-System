@@ -70,13 +70,15 @@ namespace Appointment_System.Controllers
                 
                 _logger.LogInformation("Token validated successfully for user: {UserId}", user.Id);
                 
-                return Ok(new { 
-                    user = new {
-                        id = user.Id,
+                return Ok(new {
                         email = user.Email,
                         fullName = user.FullName,
-                        roles = roles
-                    }
+                        role = roles.FirstOrDefault(),
+                        isServiceProvider = user.IsServiceProvider,
+                        profilePictureUrl = user.ProfilePictureUrl,
+                        businessName = user.BusinessName,
+                        businessDescription = user.BusinessDescription
+                    
                 });
             }
             

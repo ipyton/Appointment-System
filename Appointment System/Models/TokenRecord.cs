@@ -6,10 +6,11 @@ namespace Appointment_System.Models
 {
     public class TokenRecord
     {
-        public ApplicationUser ApplicationUser { get; set; }
+        //public ApplicationUser ApplicationUser { get; set; }
         
         [Key]
         [Required]
+        [Column(TypeName = "varchar(900)")]
         public string AccessToken { get; set; } = string.Empty;
         
         public DateTimeOffset ExpiresOn { get; set; }

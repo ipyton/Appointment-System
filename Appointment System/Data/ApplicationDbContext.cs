@@ -56,11 +56,11 @@ namespace Appointment_System.Data
                 .OnDelete(DeleteBehavior.Cascade);
 
 
-            builder.Entity<ApplicationUser>()
-                .HasMany(u => u.TokenRecords)
-                .WithOne(t => t.ApplicationUser)
-                .HasForeignKey(t => t.ApplicationUserId)
-                .OnDelete(DeleteBehavior.Cascade);
+            builder.Entity<TokenRecord>()               // (1)
+                .HasOne<ApplicationUser>()               // (2)
+                .WithMany()                              // (3)
+                .HasForeignKey(tr => tr.ApplicationUserId) // (4)
+                .OnDelete(DeleteBehavior.Cascade);       // (5)
         }
     }
 } 
