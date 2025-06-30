@@ -25,24 +25,25 @@ namespace Appointment_System.Middleware
         {
             try
             {
+                _logger.LogInformation("TokenValidationMiddleware");
                 // Only check if we have authorization header
-                if (context.Request.Headers.TryGetValue("Authorization", out var authHeader) &&
-                    authHeader.ToString().StartsWith("Bearer "))
-                {
-                    string token = authHeader.ToString().Substring("Bearer ".Length).Trim();
+                // if (context.Request.Headers.TryGetValue("Authorization", out var authHeader) &&
+                //     authHeader.ToString().StartsWith("Bearer "))
+                // {
+                //     string token = authHeader.ToString().Substring("Bearer ".Length).Trim();
                     
-                    // Check if token is valid
-                    var tokenService = context.RequestServices.GetRequiredService<TokenService>();
-                    var validationResult = await tokenService.ValidateToken(token);
+                //     // Check if token is valid
+                //     var tokenService = context.RequestServices.GetRequiredService<TokenService>();
+                //     var validationResult = await tokenService.ValidateToken(token);
 
-                    if (!validationResult.Succeeded)
-                    {
-                        _logger.LogWarning("Request with invalid token rejected");
-                        context.Response.StatusCode = StatusCodes.Status401Unauthorized;
-                        await context.Response.WriteAsJsonAsync(new { message = "Invalid or expired token" });
-                        return;
-                    }
-                }
+                //     if (!validationResult.Succeeded)
+                //     {
+                //         _logger.LogWarning("Request with invalid token rejected");
+                //         context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                //         await context.Response.WriteAsJsonAsync(new { message = "Invalid or expired token" });
+                //         return;
+                //     }
+                // }
             }
             catch (Exception ex)
             {

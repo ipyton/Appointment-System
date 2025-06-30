@@ -5,6 +5,10 @@ using Appointment_System.Models;
 using Appointment_System.Services;
 using Appointment_System.Middleware;
 using Microsoft.Extensions.Logging;
+using TokenService = Appointment_System.Services.TokenService;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -22,8 +26,9 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(connectionString));
 
-// Register the DatabaseLoggerService
+// Register the Services
 builder.Services.AddScoped<DatabaseLoggerService>();
+builder.Services.AddScoped<TokenService>();
 
 // 配置Identity
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options => {
@@ -43,6 +48,30 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options => {
 })
 .AddEntityFrameworkStores<ApplicationDbContext>()
 .AddDefaultTokenProviders();
+
+// Configure JWT Authentication
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    options.SaveToken = true;
+    options.RequireHttpsMetadata = false;
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        ValidIssuer = builder.Configuration["Jwt:Issuer"],
+        ValidAudience = builder.Configuration["Jwt:Audience"],
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"])),
+        ClockSkew = TimeSpan.Zero
+    };
+});
 
 // 配置Cookie设置
 builder.Services.ConfigureApplicationCookie(options => {
@@ -100,6 +129,9 @@ app.UseRequestLogging();
 app.UseCors("AllowSpecificOrigins");
 
 app.UseHttpsRedirection();
+
+// Add token validation middleware to filter all requests
+app.UseMiddleware<TokenValidationMiddleware>();
 
 // 添加认证和授权中间件
 app.UseAuthentication();

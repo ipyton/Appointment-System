@@ -70,7 +70,7 @@ namespace Appointment_System.Services
             return token.Token;
         }
 
-        public async Task<string> GenerateJwtToken(ApplicationUser user)
+        public async Task<string> GenerateJwtToken(ApplicationUser user, bool rememberMe)
         {
             var claims = new List<Claim>
             {
@@ -82,7 +82,7 @@ namespace Appointment_System.Services
 
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-            var expires = DateTime.Now.AddHours(Convert.ToDouble(_config["Jwt:ExpireHours"]));
+            var expires = rememberMe ? DateTime.Now.AddDays(15) : DateTime.Now.AddHours(Convert.ToDouble(_config["Jwt:ExpireHours"]));
 
             var token = new JwtSecurityToken(
                 issuer: _config["Jwt:Issuer"],

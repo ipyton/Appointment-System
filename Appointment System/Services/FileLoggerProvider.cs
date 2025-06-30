@@ -66,7 +66,7 @@ namespace Appointment_System.Services
             _lockObj = lockObj;
         }
 
-        public IDisposable BeginScope<TState>(TState state) => default!;
+        public IDisposable? BeginScope<TState>(TState state) => null;
 
         public bool IsEnabled(LogLevel logLevel) => logLevel != LogLevel.None;
 
