@@ -73,15 +73,6 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
-// 配置Cookie设置
-builder.Services.ConfigureApplicationCookie(options => {
-    options.Cookie.HttpOnly = true;
-    options.ExpireTimeSpan = TimeSpan.FromMinutes(30);
-    options.LoginPath = "/Account/Login";
-    options.AccessDeniedPath = "/Account/AccessDenied";
-    options.SlidingExpiration = true;
-});
-
 // Add CORS services
 builder.Services.AddCors(options =>
 {

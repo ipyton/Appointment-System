@@ -27,6 +27,11 @@ namespace Appointment_System.Services
 
         public async Task<IdentityResult> ValidateToken(string token)
         {
+            if (string.IsNullOrEmpty(token))
+            {
+                return IdentityResult.Failed(new IdentityError { Code = "EmptyToken", Description = "Token cannot be empty" });
+            }
+            
             var record = await _context.Tokens.FirstOrDefaultAsync(t => t.AccessToken == token);
             if (record == null)
             {
@@ -97,14 +102,32 @@ namespace Appointment_System.Services
 
         public async Task BlacklistToken(string token)
         {
-            // Add token to blacklist
-            var blacklistedToken = new TokenRecord
+            if (string.IsNullOrEmpty(token))
             {
-                AccessToken = token,
-            };
+                throw new ArgumentException("Token cannot be empty", nameof(token));
+            }
+            
+            // Check if token exists
+            var existingToken = await _context.Tokens.FindAsync(token);
+            
+            // If token exists, remove it (blacklist it)
+            if (existingToken != null)
+            {
+                _context.Tokens.Remove(existingToken);
+                await _context.SaveChangesAsync();
+            }
+            else
+            {
+                // Add token to blacklist with minimal information
+                var blacklistedToken = new TokenRecord
+                {
+                    AccessToken = token,
+                    ExpiresOn = DateTimeOffset.UtcNow.AddYears(1) // Set far future expiration for blacklisted tokens
+                };
 
-            _context.Tokens.Remove(blacklistedToken);
-            await _context.SaveChangesAsync();
+                _context.Tokens.Add(blacklistedToken);
+                await _context.SaveChangesAsync();
+            }
         }
     }
 }
