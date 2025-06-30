@@ -85,28 +85,52 @@ namespace Appointment_System.Controllers
                 if (result.Succeeded)
                 {
                     var user = await _userManager.FindByEmailAsync(model.Email);
+                    var roles = await _userManager.GetRolesAsync(user);
                     _logger.LogInformation("User logged in successfully: {UserId}", user?.Id);
-                    return Ok(new { message = "User logged in successfully" });
+                    
+                    return StatusCode(200, new { 
+                        statusCode = 200,
+                        message = "User logged in successfully",
+                        userId = user.Id,
+                        email = user.Email,
+                        fullName = user.FullName,
+                        isServiceProvider = user.IsServiceProvider,
+                        roles = roles,
+                        profilePictureUrl = user.ProfilePictureUrl,
+                        businessName = user.BusinessName,
+                        businessDescription = user.BusinessDescription
+                    });
                 }
                 
                 if (result.IsLockedOut)
                 {
                     _logger.LogWarning("User account locked out: {Email}", model.Email);
-                    return StatusCode(403, new { message = "User account locked out" });
+                    return StatusCode(403, new { 
+                        statusCode = 403,
+                        message = "User account locked out"
+                    });
                 }
                 else
                 {
                     _logger.LogWarning("Invalid login attempt for email: {Email}", model.Email);
-                    ModelState.AddModelError(string.Empty, "Invalid login attempt.");
-                    return BadRequest(ModelState);
+                    return StatusCode(401, new { 
+                        statusCode = 401,
+                        message = "Invalid login credentials" 
+                    });
                 }
             }
             else
             {
                 _logger.LogWarning("Invalid model state during login attempt");
+                return StatusCode(400, new { 
+                    statusCode = 400,
+                    message = "Invalid input data",
+                    errors = ModelState.ToDictionary(
+                        kvp => kvp.Key,
+                        kvp => kvp.Value.Errors.Select(e => e.ErrorMessage).ToArray()
+                    )
+                });
             }
-            
-            return BadRequest(ModelState);
         }
 
         [HttpPost("logout")]

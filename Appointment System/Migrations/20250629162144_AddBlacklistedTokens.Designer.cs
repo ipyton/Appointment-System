@@ -4,6 +4,7 @@ using Appointment_System.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Appointment_System.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250629162144_AddBlacklistedTokens")]
+    partial class AddBlacklistedTokens
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -218,6 +221,33 @@ namespace Appointment_System.Migrations
                     b.ToTable("Bills");
                 });
 
+            modelBuilder.Entity("Appointment_System.Models.BlacklistedToken", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("BlacklistedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("ExpiresAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("TokenHash")
+                        .IsRequired()
+                        .HasMaxLength(88)
+                        .HasColumnType("nvarchar(88)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TokenHash")
+                        .IsUnique();
+
+                    b.ToTable("BlacklistedTokens");
+                });
+
             modelBuilder.Entity("Appointment_System.Models.Service", b =>
                 {
                     b.Property<int>("Id")
@@ -296,25 +326,6 @@ namespace Appointment_System.Migrations
                     b.HasIndex("ServiceId");
 
                     b.ToTable("ServiceAvailabilities");
-                });
-
-            modelBuilder.Entity("Appointment_System.Models.TokenRecord", b =>
-                {
-                    b.Property<string>("AccessToken")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<string>("ApplicationUserId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<DateTimeOffset>("ExpiresOn")
-                        .HasColumnType("datetimeoffset");
-
-                    b.HasKey("AccessToken");
-
-                    b.HasIndex("ApplicationUserId");
-
-                    b.ToTable("Tokens");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
@@ -506,17 +517,6 @@ namespace Appointment_System.Migrations
                     b.Navigation("Service");
                 });
 
-            modelBuilder.Entity("Appointment_System.Models.TokenRecord", b =>
-                {
-                    b.HasOne("Appointment_System.Models.ApplicationUser", "ApplicationUser")
-                        .WithMany("TokenRecords")
-                        .HasForeignKey("ApplicationUserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("ApplicationUser");
-                });
-
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
                 {
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
@@ -573,8 +573,6 @@ namespace Appointment_System.Migrations
                     b.Navigation("ProviderAppointments");
 
                     b.Navigation("Services");
-
-                    b.Navigation("TokenRecords");
 
                     b.Navigation("UserAppointments");
                 });
