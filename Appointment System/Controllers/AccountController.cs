@@ -3,9 +3,13 @@ using Microsoft.AspNetCore.Identity;
 using Appointment_System.Models;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
+using Appointment_System.Services;
+using System.Linq;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Appointment_System.Controllers
 {
+
     [ApiController]
     [Route("[controller]")]
     public class AccountController : ControllerBase
@@ -26,7 +30,8 @@ namespace Appointment_System.Controllers
             _tokenService = tokenService;
             _logger = logger;
         }
-
+        
+        [AllowAnonymous]
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterModel model)
         {
@@ -72,6 +77,7 @@ namespace Appointment_System.Controllers
             return BadRequest(ModelState);
         }
 
+        [AllowAnonymous]
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginModel model)
         {
@@ -90,7 +96,7 @@ namespace Appointment_System.Controllers
                     var user = await _userManager.FindByEmailAsync(model.Email);
                     var roles = await _userManager.GetRolesAsync(user);
                     _logger.LogInformation("User logged in successfully: {UserId}", user?.Id);
-                    var token = await _tokenService.GenerateJwtToken(user);
+                    var token = await _tokenService.GenerateJwtToken(user, model.RememberMe);
                     return StatusCode(200, new { 
                         statusCode = 200,
                         message = "User logged in successfully",
@@ -136,7 +142,8 @@ namespace Appointment_System.Controllers
                 });
             }
         }
-
+        
+        [AllowAnonymous]
         [HttpPost("logout")]
         public async Task<IActionResult> Logout()
         {
