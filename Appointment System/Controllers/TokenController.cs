@@ -33,9 +33,9 @@ namespace Appointment_System.Controllers
         }
 
         [HttpPost("validate")]
-        public async Task<IActionResult> ValidateToken([FromBody] TokenRecord model)
+        public async Task<IActionResult> ValidateToken([FromBody] TokenDTO model)
         {
-            _logger.LogInformation("Validation attempt for token: {Token}", model.AccessToken);
+            _logger.LogInformation("Validation attempt for token");
             
             if (!ModelState.IsValid)
             {
@@ -44,13 +44,13 @@ namespace Appointment_System.Controllers
             }
 
             // Verify credentials
-            var result = await _tokenService.ValidateToken(model.AccessToken);
+            var result = await _tokenService.ValidateToken(model.Token);
             
             if (result.Succeeded)
             {
                 // Decode the JWT token to extract user information
                 var tokenHandler = new JwtSecurityTokenHandler();
-                var jwtToken = tokenHandler.ReadJwtToken(model.AccessToken);
+                var jwtToken = tokenHandler.ReadJwtToken(model.Token);
                 
                 // Extract user ID from the token
                 var userId = jwtToken.Claims.FirstOrDefault(c => c.Type == "sub")?.Value;
@@ -68,10 +68,7 @@ namespace Appointment_System.Controllers
                 
                 var roles = await _userManager.GetRolesAsync(user);
                 
-                // Generate JWT token
-                // var token = await _tokenService.GenerateJwtToken(user);
-                
-                _logger.LogInformation("Token generated successfully for user: {UserId}", user.Id);
+                _logger.LogInformation("Token validated successfully for user: {UserId}", user.Id);
                 
                 return Ok(new { 
                     user = new {
@@ -89,7 +86,23 @@ namespace Appointment_System.Controllers
 
         [Authorize]
         [HttpPost("revoke")]
-        public async Task<IActionResult> RevokeToken()
+        public async Task<IActionResult> RevokeToken([FromBody] TokenDTO model)
+        {
+            if (!ModelState.IsValid)
+            {
+                _logger.LogWarning("Invalid model state during token revocation attempt");
+                return BadRequest(ModelState);
+            }
+            
+            await _tokenService.BlacklistToken(model.Token);
+            _logger.LogInformation("Token revoked for user: {UserId}", User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value);
+            
+            return Ok(new { message = "Token revoked successfully" });
+        }
+
+        [Authorize]
+        [HttpPost("revoke-current")]
+        public async Task<IActionResult> RevokeCurrentToken()
         {
             var authHeader = HttpContext.Request.Headers["Authorization"].ToString();
             if (string.IsNullOrEmpty(authHeader) || !authHeader.StartsWith("Bearer "))
