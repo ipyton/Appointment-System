@@ -40,5 +40,7 @@ namespace Appointment_System.Models
         public virtual ICollection<ServiceAvailability> Availabilities { get; set; }
         
         public virtual ICollection<Appointment> Appointments { get; set; }
+        
+        public virtual ICollection<ServiceSchedule> Schedules { get; set; }
     }
 } 
