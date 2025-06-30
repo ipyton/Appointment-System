@@ -97,6 +97,7 @@ namespace Appointment_System.Controllers
                     var roles = await _userManager.GetRolesAsync(user);
                     _logger.LogInformation("User logged in successfully: {UserId}", user?.Id);
                     var token = await _tokenService.GenerateJwtToken(user, model.RememberMe);
+                
                     await _tokenService.SetToken(token);
                     return StatusCode(200, new { 
                         statusCode = 200,

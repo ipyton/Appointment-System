@@ -75,7 +75,13 @@ namespace Appointment_System.Services
             return token.Token;
         }
 
-        public async Task<string> GenerateJwtToken(ApplicationUser user, bool rememberMe)
+        public async Task SetToken(TokenRecord token)
+        {
+            _context.Tokens.Add(token);
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task<TokenRecord> GenerateJwtToken(ApplicationUser user, bool rememberMe)
         {
             var claims = new List<Claim>
             {
@@ -96,8 +102,11 @@ namespace Appointment_System.Services
                 expires: expires,
                 signingCredentials: creds
             );
-
-            return new JwtSecurityTokenHandler().WriteToken(token);
+            return new TokenRecord{
+                ApplicationUserId = user.Id,
+                AccessToken = new JwtSecurityTokenHandler().WriteToken(token),
+                ExpiresOn = expires
+            };
         }
 
         public async Task BlacklistToken(string token)
