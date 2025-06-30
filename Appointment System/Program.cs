@@ -29,6 +29,11 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 // Register the Services
 builder.Services.AddScoped<DatabaseLoggerService>();
 builder.Services.AddScoped<TokenService>();
+builder.Services.AddScoped<AzureSearchService>();
+builder.Services.AddScoped<SearchIndexingEventHandler>();
+
+// Register background services
+builder.Services.AddHostedService<SearchIndexingService>();
 
 // 配置Identity
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options => {

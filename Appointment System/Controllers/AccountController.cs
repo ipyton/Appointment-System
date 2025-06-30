@@ -18,17 +18,20 @@ namespace Appointment_System.Controllers
         private readonly SignInManager<ApplicationUser> _signInManager;
         private readonly TokenService _tokenService;
         private readonly ILogger<AccountController> _logger;
+        private readonly SearchIndexingEventHandler _searchIndexingHandler;
 
         public AccountController(
             UserManager<ApplicationUser> userManager,
             SignInManager<ApplicationUser> signInManager,
             TokenService tokenService,
-            ILogger<AccountController> logger)
+            ILogger<AccountController> logger,
+            SearchIndexingEventHandler searchIndexingHandler)
         {
             _userManager = userManager;
             _signInManager = signInManager;
             _tokenService = tokenService;
             _logger = logger;
+            _searchIndexingHandler = searchIndexingHandler;
         }
         
         [AllowAnonymous]
@@ -72,6 +75,10 @@ namespace Appointment_System.Controllers
                     await _userManager.AddToRoleAsync(user, model.Role);
                     _logger.LogInformation("User created successfully: {UserId}", user.Id);
                     _logger.LogInformation("User signed in after registration: {UserId}", user.Id);
+                    
+                    // Index the new user in Azure Search
+                    await _searchIndexingHandler.UserCreatedOrUpdatedAsync(user);
+                    
                     return Ok(new { message = "User registered successfully" });
                 }
                 
