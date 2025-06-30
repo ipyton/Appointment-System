@@ -120,7 +120,7 @@ namespace Appointment_System.Controllers
                         email = user.Email,
                         fullName = user.FullName,
                         isServiceProvider = user.IsServiceProvider,
-                        roles = roles.FirstOrDefault(),
+                        role = roles.FirstOrDefault(),
                         profilePictureUrl = user.ProfilePictureUrl,
                         businessName = user.BusinessName,
                         businessDescription = user.BusinessDescription,
