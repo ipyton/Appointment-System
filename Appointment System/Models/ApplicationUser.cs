@@ -22,6 +22,8 @@ namespace Appointment_System.Models
         public string BusinessName { get; set; }
         
         public string BusinessDescription { get; set; }
+
+        public ICollection<TokenRecord> TokenRecords { get; set; }
         
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         

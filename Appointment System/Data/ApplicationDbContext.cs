@@ -15,7 +15,9 @@ namespace Appointment_System.Data
         public DbSet<Appointment> Appointments { get; set; }
         public DbSet<Bill> Bills { get; set; }
         public DbSet<ServiceAvailability> ServiceAvailabilities { get; set; }
-
+        public DbSet<TokenRecord> Tokens { get; set; }
+        public DbSet<ApplicationUser> ApplicationUsers { get; set; }
+        
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
@@ -54,7 +56,11 @@ namespace Appointment_System.Data
                 .OnDelete(DeleteBehavior.Cascade);
 
 
-
+            builder.Entity<ApplicationUser>()
+                .HasMany(u => u.TokenRecords)
+                .WithOne(t => t.ApplicationUser)
+                .HasForeignKey(t => t.ApplicationUserId)
+                .OnDelete(DeleteBehavior.Cascade);
         }
     }
 } 
