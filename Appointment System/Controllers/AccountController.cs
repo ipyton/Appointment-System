@@ -12,15 +12,18 @@ namespace Appointment_System.Controllers
     {
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly SignInManager<ApplicationUser> _signInManager;
+        private readonly TokenService _tokenService;
         private readonly ILogger<AccountController> _logger;
 
         public AccountController(
             UserManager<ApplicationUser> userManager,
             SignInManager<ApplicationUser> signInManager,
+            TokenService tokenService,
             ILogger<AccountController> logger)
         {
             _userManager = userManager;
             _signInManager = signInManager;
+            _tokenService = tokenService;
             _logger = logger;
         }
 
@@ -87,7 +90,7 @@ namespace Appointment_System.Controllers
                     var user = await _userManager.FindByEmailAsync(model.Email);
                     var roles = await _userManager.GetRolesAsync(user);
                     _logger.LogInformation("User logged in successfully: {UserId}", user?.Id);
-                    
+                    var token = await _tokenService.GenerateJwtToken(user);
                     return StatusCode(200, new { 
                         statusCode = 200,
                         message = "User logged in successfully",
@@ -98,7 +101,8 @@ namespace Appointment_System.Controllers
                         roles = roles,
                         profilePictureUrl = user.ProfilePictureUrl,
                         businessName = user.BusinessName,
-                        businessDescription = user.BusinessDescription
+                        businessDescription = user.BusinessDescription,
+                        token = token
                     });
                 }
                 
