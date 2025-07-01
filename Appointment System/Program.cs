@@ -12,6 +12,22 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Load environment variables from configuration in development
+if (builder.Environment.IsDevelopment())
+{
+    // Load sensitive configuration into environment variables in development
+    var azureSearchSection = builder.Configuration.GetSection("AzureSearch");
+    if (!string.IsNullOrEmpty(azureSearchSection["AdminApiKey"]))
+    {
+        Environment.SetEnvironmentVariable("AZURE_SEARCH_ADMIN_API_KEY", azureSearchSection["AdminApiKey"]);
+    }
+    
+    if (!string.IsNullOrEmpty(azureSearchSection["QueryApiKey"]))
+    {
+        Environment.SetEnvironmentVariable("AZURE_SEARCH_QUERY_API_KEY", azureSearchSection["QueryApiKey"]);
+    }
+}
+
 // Configure logging
 builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
