@@ -22,8 +22,20 @@ namespace Appointment_System.Services
         public AzureSearchService(IConfiguration configuration)
         {
             var searchServiceEndpoint = configuration["AzureSearch:Endpoint"];
-            var adminApiKey = configuration["AzureSearch:AdminApiKey"];
+            
+            // Prioritize environment variables over configuration values
+            var adminApiKey = Environment.GetEnvironmentVariable("AZURE_SEARCH_ADMIN_API_KEY") ?? 
+                              configuration["AzureSearch:AdminApiKey"];
+            
+            var queryApiKey = Environment.GetEnvironmentVariable("AZURE_SEARCH_QUERY_API_KEY") ?? 
+                              configuration["AzureSearch:QueryApiKey"];
+                              
             _indexName = configuration["AzureSearch:IndexName"] ?? "appointment-system-index";
+
+            if (string.IsNullOrEmpty(adminApiKey))
+            {
+                throw new InvalidOperationException("Azure Search Admin API Key is not configured. Set the AZURE_SEARCH_ADMIN_API_KEY environment variable.");
+            }
 
             // Initialize the clients
             _indexClient = new SearchIndexClient(
@@ -41,24 +53,26 @@ namespace Appointment_System.Services
         /// </summary>
         public async Task CreateOrUpdateIndexAsync()
         {
+
+                
             // Define fields for the index
-            var fields = new List<SearchField>
-            {
-                new SimpleField("id", SearchFieldDataType.String) { IsKey = true, IsFilterable = true },
-                new SearchableField("type") { IsFilterable = true, IsSortable = true },
-                new SearchableField("name") { IsFilterable = true, IsSortable = true },
-                new SearchableField("description"),
-                new SimpleField("isActive", SearchFieldDataType.Boolean) { IsFilterable = true },
-                new SimpleField("createdAt", SearchFieldDataType.DateTimeOffset) { IsFilterable = true, IsSortable = true },
-                new SearchableField("email") { IsFilterable = true },
-                new SearchableField("address"),
-                new SimpleField("isServiceProvider", SearchFieldDataType.Boolean) { IsFilterable = true },
-                new SearchableField("businessName"),
-                new SimpleField("price", SearchFieldDataType.Double) { IsFilterable = true, IsSortable = true },
-                new SimpleField("durationMinutes", SearchFieldDataType.Int32) { IsFilterable = true },
-                new SimpleField("providerId", SearchFieldDataType.String) { IsFilterable = true },
-                new SearchableField("tags") { IsFilterable = true, IsFacetable = true }
-            };
+    var fields = new List<SearchField>
+    {
+        new SimpleField("id", SearchFieldDataType.String) { IsKey = true, IsFilterable = true },
+        new SearchableField("type") { IsFilterable = true, IsSortable = true },
+        new SearchableField("name") { IsFilterable = true, IsSortable = true },
+        new SearchableField("description"),
+        new SimpleField("isActive", SearchFieldDataType.Boolean) { IsFilterable = true },
+        new SimpleField("createdAt", SearchFieldDataType.DateTimeOffset) { IsFilterable = true, IsSortable = true },
+        new SearchableField("email") { IsFilterable = true },
+        new SearchableField("address"),
+        new SimpleField("isServiceProvider", SearchFieldDataType.Boolean) { IsFilterable = true },
+        new SearchableField("businessName"),
+        new SimpleField("price", SearchFieldDataType.Double) { IsFilterable = true, IsSortable = true },
+        new SimpleField("durationMinutes", SearchFieldDataType.Int32) { IsFilterable = true },
+        new SimpleField("providerId", SearchFieldDataType.String) { IsFilterable = true },
+        new SearchField("tags", SearchFieldDataType.Collection(SearchFieldDataType.String)) { IsSearchable = true, IsFilterable = true, IsFacetable = true }
+    };
 
             var definition = new SearchIndex(_indexName, fields);
 
