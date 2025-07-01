@@ -8,11 +8,14 @@ using Microsoft.EntityFrameworkCore;
 using Appointment_System.Data;
 using Appointment_System.Models;
 using Microsoft.Extensions.Logging;
+using System.Security.Claims;
+using System.ComponentModel.DataAnnotations;
 
 namespace Appointment_System.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize]
     public class ScheduleController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
@@ -24,250 +27,297 @@ namespace Appointment_System.Controllers
             _logger = logger;
         }
 
-        [HttpGet("service/{serviceId}")]
-        public async Task<IActionResult> GetServiceSchedules(int serviceId)
+        [HttpGet("templates")]
+        public async Task<IActionResult> GetProviderTemplates()
         {
-            var schedules = await _context.ServiceSchedules
-                .Where(s => s.ServiceId == serviceId)
-                .Select(s => new {
-                    s.Id,
-                    s.ServiceId,
-                    s.StartDate,
-                    s.RepeatWeeks,
-                    s.SlotDurationMinutes,
-                    s.IsActive,
-                    WeekDays = _context.WeeklyAvailabilities
-                        .Where(wa => wa.ServiceScheduleId == s.Id)
-                        .Select(wa => new {
-                            wa.Id,
-                            wa.DayOfWeek,
-                            wa.IsAvailable,
-                            TimeSlots = _context.TimeSlots
-                                .Where(ts => ts.WeeklyAvailabilityId == wa.Id)
-                                .Select(ts => new {
-                                    ts.Id,
-                                    ts.StartTime,
-                                    ts.EndTime,
-                                    ts.MaxConcurrentAppointments
-                                })
-                                .OrderBy(ts => ts.StartTime)
-                                .ToList()
-                        })
-                        .OrderBy(wa => wa.DayOfWeek)
-                        .ToList()
-                })
+            var providerId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            
+            var templates = await _context.Templates
+                .Where(t => t.ProviderId == providerId)
+                .Include(t => t.Days)
                 .ToListAsync();
 
-            return Ok(schedules);
+            return Ok(templates);
         }
 
-        [Authorize]
-        [HttpPost("service/{serviceId}")]
-        public async Task<IActionResult> CreateServiceSchedule(int serviceId, [FromBody] ServiceScheduleDto dto)
+        [HttpGet("templates/{id}")]
+        public async Task<IActionResult> GetTemplateDetails(int id)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
-            // Check if service exists
-            var service = await _context.Services.FindAsync(serviceId);
-            if (service == null)
-            {
-                return NotFound(new { message = "Service not found" });
-            }
-
-            // Create schedule
-            var schedule = new ServiceSchedule
-            {
-                ServiceId = serviceId,
-                StartDate = dto.StartDate,
-                RepeatWeeks = dto.RepeatWeeks,
-                SlotDurationMinutes = dto.SlotDurationMinutes,
-                IsActive = true,
-                CreatedAt = DateTime.UtcNow
-            };
-
-            _context.ServiceSchedules.Add(schedule);
-            await _context.SaveChangesAsync();
-
-            // Return the created schedule
-            return CreatedAtAction(nameof(GetServiceSchedules), new { serviceId }, schedule);
-        }
-
-        [Authorize]
-        [HttpPost("day/{scheduleId}")]
-        public async Task<IActionResult> AddWeekDay(int scheduleId, [FromBody] WeekDayDto dto)
-        {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
-            // Check if schedule exists
-            var schedule = await _context.ServiceSchedules.FindAsync(scheduleId);
-            if (schedule == null)
-            {
-                return NotFound(new { message = "Schedule not found" });
-            }
+            var providerId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             
-            // Check if this day already exists for this schedule
-            var existingDay = await _context.WeeklyAvailabilities
-                .FirstOrDefaultAsync(wa => wa.ServiceScheduleId == scheduleId && wa.DayOfWeek == dto.DayOfWeek);
+            var template = await _context.Templates
+                .Include(t => t.Days)
+                .FirstOrDefaultAsync(t => t.Id == id && t.ProviderId == providerId);
                 
-            if (existingDay != null)
-            {
-                return BadRequest(new { message = $"Day {dto.DayOfWeek} already exists for this schedule" });
-            }
+            if (template == null)
+                return NotFound(new { message = "Template not found" });
 
-            // Create weekly day availability
-            var weekDay = new WeeklyAvailability
-            {
-                ServiceScheduleId = scheduleId,
-                DayOfWeek = dto.DayOfWeek,
-                IsAvailable = true,
-                CreatedAt = DateTime.UtcNow
-            };
-
-            _context.WeeklyAvailabilities.Add(weekDay);
-            await _context.SaveChangesAsync();
-
-            // Return the created day
-            return Ok(weekDay);
+            return Ok(template);
         }
-        
-        [Authorize]
-        [HttpPost("timeslot/{weekDayId}")]
-        public async Task<IActionResult> AddTimeSlot(int weekDayId, [FromBody] TimeSlotDto dto)
+
+        [HttpPost("templates")]
+        public async Task<IActionResult> CreateTemplate([FromBody] TemplateDto dto)
         {
             if (!ModelState.IsValid)
-            {
                 return BadRequest(ModelState);
-            }
-
-            // Check if weekly day exists
-            var weekDay = await _context.WeeklyAvailabilities.FindAsync(weekDayId);
-            if (weekDay == null)
-            {
-                return NotFound(new { message = "Weekly day not found" });
-            }
+                
+            var providerId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             
-            // Validate time range
-            if (dto.EndTime <= dto.StartTime)
+            var template = new Template
             {
-                return BadRequest(new { message = "End time must be after start time" });
-            }
+                Name = dto.Name,
+                Description = dto.Description,
+                Type = dto.Type,
+                ProviderId = providerId,
+                Days = new List<Day>()
+            };
+            
+            _context.Templates.Add(template);
+            await _context.SaveChangesAsync();
+            
+            return CreatedAtAction(nameof(GetTemplateDetails), new { id = template.Id }, template);
+        }
 
-            // Create time slot
-            var timeSlot = new TimeSlot
+        [HttpPost("templates/{templateId}/days")]
+        public async Task<IActionResult> AddDayToTemplate(int templateId, [FromBody] DayDto dto)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+                
+            var providerId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            
+            var template = await _context.Templates
+                .FirstOrDefaultAsync(t => t.Id == templateId && t.ProviderId == providerId);
+                
+            if (template == null)
+                return NotFound(new { message = "Template not found" });
+                
+            var day = new Day
             {
-                WeeklyAvailabilityId = weekDayId,
+                Index = dto.Index,
+                TemplateId = templateId
+            };
+            
+            _context.Days.Add(day);
+            await _context.SaveChangesAsync();
+            
+            return Ok(day);
+        }
+
+        [HttpPost("days/{dayId}/segments")]
+        public async Task<IActionResult> AddSegmentToDay(int dayId, [FromBody] SegmentDto dto)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+                
+            var providerId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            
+            var day = await _context.Days
+                .Include(d => d.Template)
+                .FirstOrDefaultAsync(d => d.Id == dayId);
+                
+            if (day == null)
+                return NotFound(new { message = "Day not found" });
+                
+            if (day.Template.ProviderId != providerId)
+                return Forbid();
+                
+            if (dto.StartTime >= dto.EndTime)
+                return BadRequest(new { message = "End time must be after start time" });
+                
+            var segment = new Segment
+            {
+                DayId = dayId,
+                TemplateId = day.TemplateId,
                 StartTime = dto.StartTime,
                 EndTime = dto.EndTime,
-                MaxConcurrentAppointments = dto.MaxConcurrentAppointments,
-                CreatedAt = DateTime.UtcNow
+                DurationForSingleSlot = dto.DurationForSingleSlot
             };
-
-            _context.TimeSlots.Add(timeSlot);
+            
+            _context.Segments.Add(segment);
             await _context.SaveChangesAsync();
-
-            // Return the created time slot
-            return Ok(timeSlot);
-        }
-        
-        [Authorize]
-        [HttpPut("timeslot/{id}")]
-        public async Task<IActionResult> UpdateTimeSlot(int id, [FromBody] TimeSlotDto dto)
-        {
-            var timeSlot = await _context.TimeSlots.FindAsync(id);
-            if (timeSlot == null)
+            
+            // Create slots for this segment
+            var currentTime = segment.StartTime;
+            while (currentTime.AddMinutes(segment.DurationForSingleSlot.TotalMinutes) <= segment.EndTime)
             {
-                return NotFound(new { message = "Time slot not found" });
+                var slot = new Slot
+                {
+                    DayId = dayId,
+                    duration = segment.DurationForSingleSlot
+                };
+                
+                _context.Slots.Add(slot);
+                currentTime = currentTime.AddMinutes(segment.DurationForSingleSlot.TotalMinutes);
             }
             
-            // Validate time range
-            if (dto.EndTime <= dto.StartTime)
-            {
-                return BadRequest(new { message = "End time must be after start time" });
-            }
-
-            // Update properties
-            timeSlot.StartTime = dto.StartTime;
-            timeSlot.EndTime = dto.EndTime;
-            timeSlot.MaxConcurrentAppointments = dto.MaxConcurrentAppointments;
-            timeSlot.UpdatedAt = DateTime.UtcNow;
-
-            _context.TimeSlots.Update(timeSlot);
             await _context.SaveChangesAsync();
-
-            return Ok(timeSlot);
+            
+            return Ok(segment);
         }
-        
-        [Authorize]
-        [HttpDelete("timeslot/{id}")]
-        public async Task<IActionResult> DeleteTimeSlot(int id)
+
+        [HttpPost("arrangements")]
+        public async Task<IActionResult> CreateArrangement([FromBody] ArrangementDto dto)
         {
-            var timeSlot = await _context.TimeSlots.FindAsync(id);
-            if (timeSlot == null)
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+                
+            var providerId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            
+            // Check if service exists and belongs to the provider
+            var service = await _context.Services
+                .FirstOrDefaultAsync(s => s.Id == dto.ServiceId && s.ProviderId == providerId);
+                
+            if (service == null)
+                return NotFound(new { message = "Service not found" });
+                
+            // Check if template exists and belongs to the provider
+            var template = await _context.Templates
+                .FirstOrDefaultAsync(t => t.Id == dto.TemplateId && t.ProviderId == providerId);
+                
+            if (template == null)
+                return NotFound(new { message = "Template not found" });
+                
+            var arrangement = new Arrangement
             {
-                return NotFound(new { message = "Time slot not found" });
-            }
-
-            _context.TimeSlots.Remove(timeSlot);
+                ServiceId = dto.ServiceId,
+                TemplateId = dto.TemplateId,
+                StartDateTime = dto.StartDateTime,
+                RepeatTimes = dto.RepeatTimes,
+                RepeatInterval = dto.RepeatInterval
+            };
+            
+            _context.Arrangements.Add(arrangement);
             await _context.SaveChangesAsync();
-
-            return Ok(new { message = "Time slot deleted" });
+            
+            return Ok(arrangement);
         }
-        
-        [Authorize]
-        [HttpDelete("day/{id}")]
-        public async Task<IActionResult> DeleteWeekDay(int id)
+
+        [HttpGet("arrangements")]
+        public async Task<IActionResult> GetProviderArrangements()
         {
-            var weekDay = await _context.WeeklyAvailabilities.FindAsync(id);
-            if (weekDay == null)
-            {
-                return NotFound(new { message = "Weekly day not found" });
-            }
-
-            _context.WeeklyAvailabilities.Remove(weekDay);
-            await _context.SaveChangesAsync();
-
-            return Ok(new { message = "Weekly day and all associated time slots deleted" });
+            var providerId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            
+            var arrangements = await _context.Arrangements
+                .Include(a => a.Service)
+                .Include(a => a.Template)
+                .Where(a => a.Service.ProviderId == providerId)
+                .ToListAsync();
+                
+            return Ok(arrangements);
         }
-        
-        [Authorize]
-        [HttpDelete("service-schedule/{id}")]
-        public async Task<IActionResult> DeleteServiceSchedule(int id)
+
+        [HttpGet("appointments")]
+        public async Task<IActionResult> GetProviderAppointments([FromQuery] DateTime? startDate, [FromQuery] DateTime? endDate)
         {
-            var schedule = await _context.ServiceSchedules.FindAsync(id);
-            if (schedule == null)
+            var providerId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            
+            var query = _context.Appointments
+                .Include(a => a.Bill)
+                .Where(a => a.Service.ProviderId == providerId);
+                
+            if (startDate.HasValue)
+                query = query.Where(a => a.CreatedAt >= startDate.Value);
+                
+            if (endDate.HasValue)
+                query = query.Where(a => a.CreatedAt <= endDate.Value);
+                
+            var appointments = await query.ToListAsync();
+            
+            return Ok(appointments);
+        }
+
+        [HttpPut("appointments/{id}/status")]
+        public async Task<IActionResult> UpdateAppointmentStatus(int id, [FromBody] UpdateStatusDto dto)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+                
+            var providerId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            
+            var appointment = await _context.Appointments
+                .Include(a => a.Bill)
+                .Include(a => a.Service)
+                .FirstOrDefaultAsync(a => a.Id == id && a.Service.ProviderId == providerId);
+                
+            if (appointment == null)
+                return NotFound(new { message = "Appointment not found" });
+                
+            appointment.Status = dto.Status;
+            appointment.UpdatedAt = DateTime.UtcNow;
+            
+            // Update bill status if needed
+            if (dto.Status == AppointmentStatus.Completed && appointment.Bill.Status == BillStatus.Pending)
             {
-                return NotFound(new { message = "Service schedule not found" });
+                appointment.Bill.Status = BillStatus.Paid;
+                appointment.Bill.UpdatedAt = DateTime.UtcNow;
             }
-
-            _context.ServiceSchedules.Remove(schedule);
+            else if (dto.Status == AppointmentStatus.Cancelled && appointment.Bill.Status == BillStatus.Pending)
+            {
+                appointment.Bill.Status = BillStatus.Cancelled;
+                appointment.Bill.UpdatedAt = DateTime.UtcNow;
+            }
+            
             await _context.SaveChangesAsync();
-
-            return Ok(new { message = "Service schedule deleted" });
+            
+            return Ok(appointment);
         }
     }
-    
-    public class ServiceScheduleDto
+
+    public class TemplateDto
     {
-        public DateTime StartDate { get; set; } = DateTime.UtcNow.Date;
-        public int? RepeatWeeks { get; set; }
-        public int SlotDurationMinutes { get; set; } = 30;
+        [Required]
+        [StringLength(100)]
+        public string Name { get; set; }
+        
+        [StringLength(500)]
+        public string Description { get; set; }
+        
+        public bool Type { get; set; }
     }
-    
-    public class WeekDayDto
+
+    public class DayDto
     {
-        public DayOfWeek DayOfWeek { get; set; }
+        [Required]
+        [Range(0, 6)]
+        public int Index { get; set; }
     }
-    
-    public class TimeSlotDto
+
+    public class SegmentDto
     {
-        public TimeSpan StartTime { get; set; }
-        public TimeSpan EndTime { get; set; }
-        public int MaxConcurrentAppointments { get; set; } = 1;
+        [Required]
+        public TimeOnly StartTime { get; set; }
+        
+        [Required]
+        public TimeOnly EndTime { get; set; }
+        
+        [Required]
+        public TimeSpan DurationForSingleSlot { get; set; }
+    }
+
+    public class ArrangementDto
+    {
+        [Required]
+        public int ServiceId { get; set; }
+        
+        [Required]
+        public int TemplateId { get; set; }
+        
+        [Required]
+        public DateTime StartDateTime { get; set; }
+        
+        [Required]
+        [Range(1, 52)]
+        public int RepeatTimes { get; set; } = 1;
+        
+        [Required]
+        [Range(1, 7)]
+        public int RepeatInterval { get; set; } = 1;
+    }
+
+    public class UpdateStatusDto
+    {
+        [Required]
+        public AppointmentStatus Status { get; set; }
     }
 } 

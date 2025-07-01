@@ -9,6 +9,7 @@ using Azure.Search.Documents.Indexes.Models;
 using Azure.Search.Documents.Models;
 using Microsoft.Extensions.Configuration;
 using Appointment_System.Models;
+using System.Text.Json;
 
 namespace Appointment_System.Services
 {
@@ -40,13 +41,29 @@ namespace Appointment_System.Services
         /// </summary>
         public async Task CreateOrUpdateIndexAsync()
         {
-            var fieldBuilder = new FieldBuilder();
-            var searchFields = fieldBuilder.Build(typeof(SearchDocument));
+            // Define fields for the index
+            var fields = new List<SearchField>
+            {
+                new SimpleField("id", SearchFieldDataType.String) { IsKey = true, IsFilterable = true },
+                new SearchableField("type") { IsFilterable = true, IsSortable = true },
+                new SearchableField("name") { IsFilterable = true, IsSortable = true },
+                new SearchableField("description"),
+                new SimpleField("isActive", SearchFieldDataType.Boolean) { IsFilterable = true },
+                new SimpleField("createdAt", SearchFieldDataType.DateTimeOffset) { IsFilterable = true, IsSortable = true },
+                new SearchableField("email") { IsFilterable = true },
+                new SearchableField("address"),
+                new SimpleField("isServiceProvider", SearchFieldDataType.Boolean) { IsFilterable = true },
+                new SearchableField("businessName"),
+                new SimpleField("price", SearchFieldDataType.Double) { IsFilterable = true, IsSortable = true },
+                new SimpleField("durationMinutes", SearchFieldDataType.Int32) { IsFilterable = true },
+                new SimpleField("providerId", SearchFieldDataType.String) { IsFilterable = true },
+                new SearchableField("tags") { IsFilterable = true, IsFacetable = true }
+            };
 
-            var definition = new SearchIndex(_indexName, searchFields);
+            var definition = new SearchIndex(_indexName, fields);
 
             // Add suggesters for autocomplete functionality
-            var suggester = new SearchSuggester("sg", new[] { "Name", "Description", "Email", "BusinessName" });
+            var suggester = new SearchSuggester("sg", new[] { "name", "description", "email", "businessName" });
             definition.Suggesters.Add(suggester);
 
             await _indexClient.CreateOrUpdateIndexAsync(definition);
@@ -91,7 +108,7 @@ namespace Appointment_System.Services
         /// <summary>
         /// Indexes a single document
         /// </summary>
-        private async Task IndexDocumentAsync(SearchDocument document)
+        private async Task IndexDocumentAsync(Dictionary<string, object> document)
         {
             var batch = IndexDocumentsBatch.Upload(new[] { document });
             await _searchClient.IndexDocumentsAsync(batch);
@@ -100,7 +117,7 @@ namespace Appointment_System.Services
         /// <summary>
         /// Indexes a batch of documents
         /// </summary>
-        private async Task IndexDocumentsAsync(IEnumerable<SearchDocument> documents)
+        private async Task IndexDocumentsAsync(IEnumerable<Dictionary<string, object>> documents)
         {
             if (documents == null || !documents.Any())
                 return;
@@ -130,14 +147,14 @@ namespace Appointment_System.Services
         /// </summary>
         private async Task DeleteDocumentAsync(string documentId)
         {
-            var batch = IndexDocumentsBatch.Delete("Id", documentId);
+            var batch = IndexDocumentsBatch.Delete("id", new[] { documentId });
             await _searchClient.IndexDocumentsAsync(batch);
         }
 
         /// <summary>
         /// Searches for documents in the index
         /// </summary>
-        public async Task<SearchResults<SearchDocument>> SearchAsync(
+        public async Task<SearchResults<Dictionary<string, object>>> SearchAsync(
             string searchText,
             string filter = null,
             int skip = 0,
@@ -161,17 +178,17 @@ namespace Appointment_System.Services
             }
 
             // Add facets for filtering
-            options.Facets.Add("Tags");
-            options.Facets.Add("IsServiceProvider");
-            options.Facets.Add("IsActive");
+            options.Facets.Add("tags");
+            options.Facets.Add("isServiceProvider");
+            options.Facets.Add("isActive");
 
-            return await _searchClient.SearchAsync<SearchDocument>(searchText, options);
+            return await _searchClient.SearchAsync<Dictionary<string, object>>(searchText, options);
         }
 
         /// <summary>
         /// Gets autocomplete suggestions
         /// </summary>
-        public async Task<SuggestResults<SearchDocument>> SuggestAsync(
+        public async Task<SuggestResults<Dictionary<string, object>>> SuggestAsync(
             string searchText,
             string suggesterName = "sg",
             bool fuzzy = true,
@@ -183,7 +200,7 @@ namespace Appointment_System.Services
                 Size = top
             };
 
-            return await _searchClient.SuggestAsync<SearchDocument>(searchText, suggesterName, options);
+            return await _searchClient.SuggestAsync<Dictionary<string, object>>(searchText, suggesterName, options);
         }
     }
 } 
