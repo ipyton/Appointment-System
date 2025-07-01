@@ -133,8 +133,14 @@ namespace Appointment_System.Migrations
                     b.Property<DateTime>("AppointmentDate")
                         .HasColumnType("datetime2");
 
+                    b.Property<int>("BillId")
+                        .HasColumnType("int");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
+
+                    b.Property<int>("DayId")
+                        .HasColumnType("int");
 
                     b.Property<DateTime>("EndTime")
                         .HasColumnType("datetime2");
@@ -144,13 +150,22 @@ namespace Appointment_System.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
 
+                    b.Property<int>("SegmentId")
+                        .HasColumnType("int");
+
                     b.Property<int>("ServiceId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("SlotId")
                         .HasColumnType("int");
 
                     b.Property<DateTime>("StartTime")
                         .HasColumnType("datetime2");
 
                     b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<int>("TemplateId")
                         .HasColumnType("int");
 
                     b.Property<DateTime?>("UpdatedAt")
@@ -164,11 +179,61 @@ namespace Appointment_System.Migrations
 
                     b.HasIndex("ApplicationUserId");
 
+                    b.HasIndex("BillId")
+                        .IsUnique();
+
                     b.HasIndex("ServiceId");
+
+                    b.HasIndex("SlotId")
+                        .IsUnique();
+
+                    b.HasIndex("TemplateId");
 
                     b.HasIndex("UserId");
 
                     b.ToTable("Appointments");
+                });
+
+            modelBuilder.Entity("Appointment_System.Models.Arrangement", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("RepeatInterval")
+                        .HasColumnType("int");
+
+                    b.Property<int>("RepeatTimes")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ServiceId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ServiceId1")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("StartDateTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("TemplateId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("TemplateId1")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ServiceId");
+
+                    b.HasIndex("ServiceId1");
+
+                    b.HasIndex("TemplateId");
+
+                    b.HasIndex("TemplateId1");
+
+                    b.ToTable("Arrangements");
                 });
 
             modelBuilder.Entity("Appointment_System.Models.Bill", b =>
@@ -218,6 +283,105 @@ namespace Appointment_System.Migrations
                     b.ToTable("Bills");
                 });
 
+            modelBuilder.Entity("Appointment_System.Models.Day", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("Index")
+                        .HasColumnType("int");
+
+                    b.Property<int>("TemplateId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("TemplateId1")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TemplateId");
+
+                    b.HasIndex("TemplateId1");
+
+                    b.ToTable("Days");
+                });
+
+            modelBuilder.Entity("Appointment_System.Models.Message", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("AppointmentId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsRead")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("ReadAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("SenderId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AppointmentId");
+
+                    b.HasIndex("SenderId");
+
+                    b.ToTable("Messages");
+                });
+
+            modelBuilder.Entity("Appointment_System.Models.Segment", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("DayId")
+                        .HasColumnType("int");
+
+                    b.Property<TimeSpan>("DurationForSingleSlot")
+                        .HasColumnType("time");
+
+                    b.Property<TimeOnly>("EndTime")
+                        .HasColumnType("time");
+
+                    b.Property<int?>("ServiceId")
+                        .HasColumnType("int");
+
+                    b.Property<TimeOnly>("StartTime")
+                        .HasColumnType("time");
+
+                    b.Property<int>("TemplateId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DayId");
+
+                    b.HasIndex("ServiceId");
+
+                    b.ToTable("Segments");
+                });
+
             modelBuilder.Entity("Appointment_System.Models.Service", b =>
                 {
                     b.Property<int>("Id")
@@ -255,6 +419,12 @@ namespace Appointment_System.Migrations
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime2");
 
+                    b.Property<bool>("allowMultipleBookings")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("enabled")
+                        .HasColumnType("bit");
+
                     b.HasKey("Id");
 
                     b.HasIndex("ProviderId");
@@ -262,7 +432,7 @@ namespace Appointment_System.Migrations
                     b.ToTable("Services");
                 });
 
-            modelBuilder.Entity("Appointment_System.Models.ServiceAvailability", b =>
+            modelBuilder.Entity("Appointment_System.Models.Slot", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -270,101 +440,51 @@ namespace Appointment_System.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<DateTime>("CreatedAt")
+                    b.Property<int>("DayId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("EndTime")
                         .HasColumnType("datetime2");
-
-                    b.Property<int>("DayOfWeek")
-                        .HasColumnType("int");
-
-                    b.Property<TimeSpan>("EndTime")
-                        .HasColumnType("time");
-
-                    b.Property<bool>("IsAvailable")
-                        .HasColumnType("bit");
-
-                    b.Property<int>("ServiceId")
-                        .HasColumnType("int");
-
-                    b.Property<TimeSpan>("StartTime")
-                        .HasColumnType("time");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ServiceId");
-
-                    b.ToTable("ServiceAvailabilities");
-                });
-
-            modelBuilder.Entity("Appointment_System.Models.ServiceSchedule", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("bit");
-
-                    b.Property<int?>("RepeatWeeks")
-                        .HasColumnType("int");
-
-                    b.Property<int>("ServiceId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("SlotDurationMinutes")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("StartDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ServiceId");
-
-                    b.ToTable("ServiceSchedules");
-                });
-
-            modelBuilder.Entity("Appointment_System.Models.TimeSlot", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<TimeSpan>("EndTime")
-                        .HasColumnType("time");
 
                     b.Property<int>("MaxConcurrentAppointments")
                         .HasColumnType("int");
 
-                    b.Property<TimeSpan>("StartTime")
-                        .HasColumnType("time");
-
-                    b.Property<DateTime?>("UpdatedAt")
+                    b.Property<DateTime>("StartTime")
                         .HasColumnType("datetime2");
-
-                    b.Property<int>("WeeklyAvailabilityId")
-                        .HasColumnType("int");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("WeeklyAvailabilityId");
+                    b.HasIndex("DayId");
 
-                    b.ToTable("TimeSlots");
+                    b.ToTable("Slots");
+                });
+
+            modelBuilder.Entity("Appointment_System.Models.Template", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ProviderId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("Type")
+                        .HasColumnType("bit");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Templates");
                 });
 
             modelBuilder.Entity("Appointment_System.Models.TokenRecord", b =>
@@ -384,36 +504,6 @@ namespace Appointment_System.Migrations
                     b.HasIndex("ApplicationUserId");
 
                     b.ToTable("Tokens");
-                });
-
-            modelBuilder.Entity("Appointment_System.Models.WeeklyAvailability", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int>("DayOfWeek")
-                        .HasColumnType("int");
-
-                    b.Property<bool>("IsAvailable")
-                        .HasColumnType("bit");
-
-                    b.Property<int>("ServiceScheduleId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ServiceScheduleId");
-
-                    b.ToTable("WeeklyAvailabilities");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
@@ -555,9 +645,27 @@ namespace Appointment_System.Migrations
                         .WithMany("ProviderAppointments")
                         .HasForeignKey("ApplicationUserId");
 
+                    b.HasOne("Appointment_System.Models.Bill", "Bill")
+                        .WithOne()
+                        .HasForeignKey("Appointment_System.Models.Appointment", "BillId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
                     b.HasOne("Appointment_System.Models.Service", "Service")
-                        .WithMany("Appointments")
+                        .WithMany()
                         .HasForeignKey("ServiceId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Appointment_System.Models.Slot", null)
+                        .WithOne("Appointment")
+                        .HasForeignKey("Appointment_System.Models.Appointment", "SlotId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Appointment_System.Models.Arrangement", null)
+                        .WithMany()
+                        .HasForeignKey("TemplateId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
@@ -567,9 +675,42 @@ namespace Appointment_System.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.Navigation("Bill");
+
                     b.Navigation("Service");
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Appointment_System.Models.Arrangement", b =>
+                {
+                    b.HasOne("Appointment_System.Models.Service", null)
+                        .WithMany()
+                        .HasForeignKey("ServiceId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.HasOne("Appointment_System.Models.Service", "Service")
+                        .WithMany("Arrangements")
+                        .HasForeignKey("ServiceId1")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Appointment_System.Models.Template", null)
+                        .WithMany()
+                        .HasForeignKey("TemplateId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.HasOne("Appointment_System.Models.Template", "Template")
+                        .WithMany()
+                        .HasForeignKey("TemplateId1")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Service");
+
+                    b.Navigation("Template");
                 });
 
             modelBuilder.Entity("Appointment_System.Models.Bill", b =>
@@ -583,48 +724,73 @@ namespace Appointment_System.Migrations
                     b.Navigation("Appointment");
                 });
 
+            modelBuilder.Entity("Appointment_System.Models.Day", b =>
+                {
+                    b.HasOne("Appointment_System.Models.Template", null)
+                        .WithMany("Days")
+                        .HasForeignKey("TemplateId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.HasOne("Appointment_System.Models.Template", "Template")
+                        .WithMany()
+                        .HasForeignKey("TemplateId1")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Template");
+                });
+
+            modelBuilder.Entity("Appointment_System.Models.Message", b =>
+                {
+                    b.HasOne("Appointment_System.Models.Appointment", "Appointment")
+                        .WithMany()
+                        .HasForeignKey("AppointmentId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.HasOne("Appointment_System.Models.ApplicationUser", "Sender")
+                        .WithMany()
+                        .HasForeignKey("SenderId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Appointment");
+
+                    b.Navigation("Sender");
+                });
+
+            modelBuilder.Entity("Appointment_System.Models.Segment", b =>
+                {
+                    b.HasOne("Appointment_System.Models.Day", null)
+                        .WithMany()
+                        .HasForeignKey("DayId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.HasOne("Appointment_System.Models.Service", null)
+                        .WithMany("Segments")
+                        .HasForeignKey("ServiceId");
+                });
+
             modelBuilder.Entity("Appointment_System.Models.Service", b =>
                 {
                     b.HasOne("Appointment_System.Models.ApplicationUser", "Provider")
                         .WithMany("Services")
                         .HasForeignKey("ProviderId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
                     b.Navigation("Provider");
                 });
 
-            modelBuilder.Entity("Appointment_System.Models.ServiceAvailability", b =>
+            modelBuilder.Entity("Appointment_System.Models.Slot", b =>
                 {
-                    b.HasOne("Appointment_System.Models.Service", "Service")
-                        .WithMany("Availabilities")
-                        .HasForeignKey("ServiceId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                    b.HasOne("Appointment_System.Models.Segment", null)
+                        .WithMany()
+                        .HasForeignKey("DayId")
+                        .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
-
-                    b.Navigation("Service");
-                });
-
-            modelBuilder.Entity("Appointment_System.Models.ServiceSchedule", b =>
-                {
-                    b.HasOne("Appointment_System.Models.Service", "Service")
-                        .WithMany("Schedules")
-                        .HasForeignKey("ServiceId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Service");
-                });
-
-            modelBuilder.Entity("Appointment_System.Models.TimeSlot", b =>
-                {
-                    b.HasOne("Appointment_System.Models.WeeklyAvailability", "WeeklyAvailability")
-                        .WithMany("TimeSlots")
-                        .HasForeignKey("WeeklyAvailabilityId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("WeeklyAvailability");
                 });
 
             modelBuilder.Entity("Appointment_System.Models.TokenRecord", b =>
@@ -632,19 +798,8 @@ namespace Appointment_System.Migrations
                     b.HasOne("Appointment_System.Models.ApplicationUser", null)
                         .WithMany()
                         .HasForeignKey("ApplicationUserId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
-                });
-
-            modelBuilder.Entity("Appointment_System.Models.WeeklyAvailability", b =>
-                {
-                    b.HasOne("Appointment_System.Models.ServiceSchedule", "ServiceSchedule")
-                        .WithMany()
-                        .HasForeignKey("ServiceScheduleId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("ServiceSchedule");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -714,16 +869,19 @@ namespace Appointment_System.Migrations
 
             modelBuilder.Entity("Appointment_System.Models.Service", b =>
                 {
-                    b.Navigation("Appointments");
+                    b.Navigation("Arrangements");
 
-                    b.Navigation("Availabilities");
-
-                    b.Navigation("Schedules");
+                    b.Navigation("Segments");
                 });
 
-            modelBuilder.Entity("Appointment_System.Models.WeeklyAvailability", b =>
+            modelBuilder.Entity("Appointment_System.Models.Slot", b =>
                 {
-                    b.Navigation("TimeSlots");
+                    b.Navigation("Appointment");
+                });
+
+            modelBuilder.Entity("Appointment_System.Models.Template", b =>
+                {
+                    b.Navigation("Days");
                 });
 #pragma warning restore 612, 618
         }

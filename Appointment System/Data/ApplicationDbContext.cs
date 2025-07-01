@@ -14,12 +14,15 @@ namespace Appointment_System.Data
         public DbSet<Service> Services { get; set; }
         public DbSet<Appointment> Appointments { get; set; }
         public DbSet<Bill> Bills { get; set; }
-        public DbSet<ServiceAvailability> ServiceAvailabilities { get; set; }
-        public DbSet<ServiceSchedule> ServiceSchedules { get; set; }
-        public DbSet<WeeklyAvailability> WeeklyAvailabilities { get; set; }
-        public DbSet<TimeSlot> TimeSlots { get; set; }
         public DbSet<TokenRecord> Tokens { get; set; }
         public DbSet<ApplicationUser> ApplicationUsers { get; set; }
+        public DbSet<Message> Messages { get; set; }
+        public DbSet<Arrangement> Arrangements { get; set; }
+        public DbSet<Template> Templates { get; set; }
+        public DbSet<Day> Days { get; set; }
+        public DbSet<Segment> Segments { get; set; }
+        public DbSet<Slot> Slots { get; set; }
+
         
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -30,7 +33,7 @@ namespace Appointment_System.Data
                 .HasMany(u => u.Services)
                 .WithOne(s => s.Provider)
                 .HasForeignKey(s => s.ProviderId)
-                .OnDelete(DeleteBehavior.Cascade);
+                .OnDelete(DeleteBehavior.NoAction);
 
             builder.Entity<ApplicationUser>()
                 .HasMany(u => u.UserAppointments)
@@ -38,52 +41,80 @@ namespace Appointment_System.Data
                 .HasForeignKey(a => a.UserId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            // Configure Service
+            // Service to Arrangement relationship
             builder.Entity<Service>()
-                .HasMany(s => s.Availabilities)
-                .WithOne(sa => sa.Service)
-                .HasForeignKey(sa => sa.ServiceId)
-                .OnDelete(DeleteBehavior.Cascade);
-
-            builder.Entity<Service>()
-                .HasMany(s => s.Appointments)
-                .WithOne(a => a.Service)
+                .HasMany<Arrangement>()
+                .WithOne()
                 .HasForeignKey(a => a.ServiceId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            // Arrangement to Template relationship (one-to-one)
+            builder.Entity<Arrangement>()
+                .HasOne<Template>()
+                .WithMany()
+                .HasForeignKey(a => a.TemplateId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            // Template to Day relationship
+            builder.Entity<Template>()
+                .HasMany(t => t.Days)
+                .WithOne()
+                .HasForeignKey(d => d.TemplateId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            // Day to Segment relationship
+            builder.Entity<Day>()
+                .HasMany<Segment>()
+                .WithOne()
+                .HasForeignKey(s => s.DayId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            // Segment to Slot relationship
+            builder.Entity<Segment>()
+                .HasMany<Slot>()
+                .WithOne()
+                .HasForeignKey(s => s.DayId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            // Arrangement to Appointment relationship
+            builder.Entity<Arrangement>()
+                .HasMany<Appointment>()
+                .WithOne()
+                .HasForeignKey(a => a.TemplateId)
                 .OnDelete(DeleteBehavior.Restrict);
-                
-            builder.Entity<Service>()
-                .HasMany(s => s.Schedules)
-                .WithOne(ss => ss.Service)
-                .HasForeignKey(ss => ss.ServiceId)
-                .OnDelete(DeleteBehavior.Cascade);
-                
-            // Configure ServiceSchedule
-            builder.Entity<ServiceSchedule>()
-                .HasMany<WeeklyAvailability>()
-                .WithOne(wa => wa.ServiceSchedule)
-                .HasForeignKey(wa => wa.ServiceScheduleId)
-                .OnDelete(DeleteBehavior.Cascade);
-                
-            // Configure WeeklyAvailability
-            builder.Entity<WeeklyAvailability>()
-                .HasMany(wa => wa.TimeSlots)
-                .WithOne(ts => ts.WeeklyAvailability)
-                .HasForeignKey(ts => ts.WeeklyAvailabilityId)
-                .OnDelete(DeleteBehavior.Cascade);
 
             // Configure Appointment
             builder.Entity<Appointment>()
-                .HasMany(a => a.Bills)
-                .WithOne(b => b.Appointment)
-                .HasForeignKey(b => b.AppointmentId)
-                .OnDelete(DeleteBehavior.Cascade);
+                .HasOne(a => a.Bill)
+                .WithOne()
+                .HasForeignKey<Appointment>(a => a.BillId)
+                .OnDelete(DeleteBehavior.NoAction);
 
+            // Slot to Appointment relationship (one-to-one)
+            builder.Entity<Slot>()
+                .HasOne(s => s.Appointment)
+                .WithOne()
+                .HasForeignKey<Appointment>(a => a.SlotId)
+                .OnDelete(DeleteBehavior.Restrict);
 
-            builder.Entity<TokenRecord>()               // (1)
-                .HasOne<ApplicationUser>()               // (2)
-                .WithMany()                              // (3)
-                .HasForeignKey(tr => tr.ApplicationUserId) // (4)
-                .OnDelete(DeleteBehavior.Cascade);       // (5)
+            // Configure Message
+            builder.Entity<Message>()
+                .HasOne(m => m.Appointment)
+                .WithMany()
+                .HasForeignKey(m => m.AppointmentId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            builder.Entity<Message>()
+                .HasOne(m => m.Sender)
+                .WithMany()
+                .HasForeignKey(m => m.SenderId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            builder.Entity<TokenRecord>()
+                .HasOne<ApplicationUser>()
+                .WithMany()
+                .HasForeignKey(tr => tr.ApplicationUserId)
+                .OnDelete(DeleteBehavior.NoAction);
         }
     }
 } 

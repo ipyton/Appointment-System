@@ -79,7 +79,7 @@ namespace Appointment_System.Controllers
                     // Index the new user in Azure Search
                     await _searchIndexingHandler.UserCreatedOrUpdatedAsync(user);
                     
-                    return Ok(new { message = "User registered successfully" });
+                    return Ok(new { message = "User registered successfully", statusCode = 200 });
                 }
                 
                 _logger.LogWarning("Failed to create user for {Email}. Errors: {Errors}", 

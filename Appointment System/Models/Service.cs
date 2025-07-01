@@ -14,6 +14,8 @@ namespace Appointment_System.Models
         [StringLength(100)]
         public string Name { get; set; }
 
+        public bool enabled { get; set; } = true;
+
         [StringLength(500)]
         public string Description { get; set; }
 
@@ -36,11 +38,10 @@ namespace Appointment_System.Models
 
         public DateTime? UpdatedAt { get; set; }
         
-        // Navigation property
-        public virtual ICollection<ServiceAvailability> Availabilities { get; set; }
+        public bool allowMultipleBookings { get; set; } = false;
         
-        public virtual ICollection<Appointment> Appointments { get; set; }
+        public virtual ICollection<Segment> Segments { get; set; }
         
-        public virtual ICollection<ServiceSchedule> Schedules { get; set; }
+        public virtual ICollection<Arrangement> Arrangements { get; set; }
     }
 } 

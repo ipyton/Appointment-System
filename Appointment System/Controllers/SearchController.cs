@@ -39,17 +39,17 @@ namespace Appointment_System.Controllers
                 
                 if (!string.IsNullOrEmpty(type))
                 {
-                    filterParts.Add($"Type eq '{type}'");
+                    filterParts.Add($"type eq '{type}'");
                 }
                 
                 if (isServiceProvider.HasValue)
                 {
-                    filterParts.Add($"IsServiceProvider eq {isServiceProvider.Value.ToString().ToLower()}");
+                    filterParts.Add($"isServiceProvider eq {isServiceProvider.Value.ToString().ToLower()}");
                 }
                 
                 if (isActive.HasValue)
                 {
-                    filterParts.Add($"IsActive eq {isActive.Value.ToString().ToLower()}");
+                    filterParts.Add($"isActive eq {isActive.Value.ToString().ToLower()}");
                 }
                 
                 string filter = filterParts.Count > 0 ? string.Join(" and ", filterParts) : null;
@@ -60,27 +60,31 @@ namespace Appointment_System.Controllers
                     filter, 
                     skip, 
                     top,
-                    "Id", "Type", "Name", "Description", "IsActive", "CreatedAt", "Email", 
-                    "IsServiceProvider", "BusinessName", "Price", "DurationMinutes", "Tags");
+                    "id", "type", "name", "description", "isActive", "createdAt", "email", 
+                    "isServiceProvider", "businessName", "price", "durationMinutes", "tags");
                 
                 // Format results
                 var results = new
                 {
                     TotalCount = searchResults.TotalCount,
-                    Results = searchResults.GetResults().Select(result => new
+                    Results = searchResults.GetResults().Select(result => 
                     {
-                        Id = result.Document.Id,
-                        Type = result.Document.Type,
-                        Name = result.Document.Name,
-                        Description = result.Document.Description,
-                        IsActive = result.Document.IsActive,
-                        CreatedAt = result.Document.CreatedAt,
-                        Email = result.Document.Email,
-                        IsServiceProvider = result.Document.IsServiceProvider,
-                        BusinessName = result.Document.BusinessName,
-                        Price = result.Document.Price,
-                        DurationMinutes = result.Document.DurationMinutes,
-                        Tags = result.Document.Tags
+                        var doc = result.Document;
+                        return new
+                        {
+                            Id = doc.TryGetValue("id", out var id) ? id : null,
+                            Type = doc.TryGetValue("type", out var type) ? type : null,
+                            Name = doc.TryGetValue("name", out var name) ? name : null,
+                            Description = doc.TryGetValue("description", out var description) ? description : null,
+                            IsActive = doc.TryGetValue("isActive", out var isActive) ? isActive : null,
+                            CreatedAt = doc.TryGetValue("createdAt", out var createdAt) ? createdAt : null,
+                            Email = doc.TryGetValue("email", out var email) ? email : null,
+                            IsServiceProvider = doc.TryGetValue("isServiceProvider", out var isServiceProvider) ? isServiceProvider : null,
+                            BusinessName = doc.TryGetValue("businessName", out var businessName) ? businessName : null,
+                            Price = doc.TryGetValue("price", out var price) ? price : null,
+                            DurationMinutes = doc.TryGetValue("durationMinutes", out var durationMinutes) ? durationMinutes : null,
+                            Tags = doc.TryGetValue("tags", out var tags) ? tags : null
+                        };
                     }),
                     Facets = searchResults.Facets?.ToDictionary(
                         facet => facet.Key,
@@ -108,12 +112,16 @@ namespace Appointment_System.Controllers
             {
                 var suggestResults = await _searchService.SuggestAsync(query, "sg", fuzzy, top);
                 
-                var suggestions = suggestResults.Results.Select(result => new
+                var suggestions = suggestResults.Results.Select(result => 
                 {
-                    Text = result.Text,
-                    Id = result.Document.Id,
-                    Type = result.Document.Type,
-                    Name = result.Document.Name
+                    var doc = result.Document;
+                    return new
+                    {
+                        Text = result.Text,
+                        Id = doc.TryGetValue("id", out var id) ? id : null,
+                        Type = doc.TryGetValue("type", out var type) ? type : null,
+                        Name = doc.TryGetValue("name", out var name) ? name : null
+                    };
                 });
                 
                 return Ok(suggestions);
