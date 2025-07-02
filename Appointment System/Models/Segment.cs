@@ -16,6 +16,7 @@ namespace Appointment_System.Models
         /// <summary>
         /// The ID of the template this segment belongs to
         /// </summary>
+        [ForeignKey("TemplateId")]
         public int TemplateId { get; set; }
 
         /// <summary>
@@ -23,8 +24,6 @@ namespace Appointment_System.Models
         /// </summary>
         public int DayId { get; set; }
         
-        [ForeignKey("DayId")]
-        public Day Day { get; set; }
         
         /// <summary>
         /// Duration for a single appointment slot within this segment
@@ -51,9 +50,5 @@ namespace Appointment_System.Models
         /// </summary>
         public bool IsAvailable { get; set; } = true;
         
-        /// <summary>
-        /// Collection of slots within this segment
-        /// </summary>
-        public ICollection<Slot> Slots { get; set; }
     }
 } 

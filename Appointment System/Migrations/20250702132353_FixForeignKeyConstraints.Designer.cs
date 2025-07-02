@@ -4,6 +4,7 @@ using Appointment_System.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Appointment_System.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250702132353_FixForeignKeyConstraints")]
+    partial class FixForeignKeyConstraints
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -300,9 +303,14 @@ namespace Appointment_System.Migrations
                     b.Property<int>("TemplateId")
                         .HasColumnType("int");
 
+                    b.Property<int>("TemplateId1")
+                        .HasColumnType("int");
+
                     b.HasKey("Id");
 
                     b.HasIndex("TemplateId");
+
+                    b.HasIndex("TemplateId1");
 
                     b.ToTable("Days");
                 });
@@ -359,7 +367,7 @@ namespace Appointment_System.Migrations
                     b.Property<int>("DayId")
                         .HasColumnType("int");
 
-                    b.Property<int?>("DayId1")
+                    b.Property<int>("DayId1")
                         .HasColumnType("int");
 
                     b.Property<TimeSpan>("DurationForSingleSlot")
@@ -380,9 +388,6 @@ namespace Appointment_System.Migrations
                     b.Property<TimeOnly>("StartTime")
                         .HasColumnType("time");
 
-                    b.Property<int>("TemplateId")
-                        .HasColumnType("int");
-
                     b.HasKey("Id");
 
                     b.HasIndex("DayId");
@@ -390,8 +395,6 @@ namespace Appointment_System.Migrations
                     b.HasIndex("DayId1");
 
                     b.HasIndex("ServiceId");
-
-                    b.HasIndex("TemplateId");
 
                     b.ToTable("Segments");
                 });
@@ -479,6 +482,8 @@ namespace Appointment_System.Migrations
                         .HasColumnType("datetime2");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("DayId");
 
                     b.HasIndex("SegmentId");
 
@@ -770,6 +775,14 @@ namespace Appointment_System.Migrations
                         .HasForeignKey("TemplateId")
                         .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
+
+                    b.HasOne("Appointment_System.Models.Template", "Template")
+                        .WithMany()
+                        .HasForeignKey("TemplateId1")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Template");
                 });
 
             modelBuilder.Entity("Appointment_System.Models.Message", b =>
@@ -799,19 +812,17 @@ namespace Appointment_System.Migrations
                         .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
-                    b.HasOne("Appointment_System.Models.Day", null)
+                    b.HasOne("Appointment_System.Models.Day", "Day")
                         .WithMany("Segments")
-                        .HasForeignKey("DayId1");
+                        .HasForeignKey("DayId1")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.HasOne("Appointment_System.Models.Service", null)
                         .WithMany("Segments")
                         .HasForeignKey("ServiceId");
 
-                    b.HasOne("Appointment_System.Models.Template", null)
-                        .WithMany()
-                        .HasForeignKey("TemplateId")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired();
+                    b.Navigation("Day");
                 });
 
             modelBuilder.Entity("Appointment_System.Models.Service", b =>
@@ -827,8 +838,14 @@ namespace Appointment_System.Migrations
 
             modelBuilder.Entity("Appointment_System.Models.Slot", b =>
                 {
-                    b.HasOne("Appointment_System.Models.Segment", "Segment")
+                    b.HasOne("Appointment_System.Models.Segment", null)
                         .WithMany()
+                        .HasForeignKey("DayId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.HasOne("Appointment_System.Models.Segment", "Segment")
+                        .WithMany("Slots")
                         .HasForeignKey("SegmentId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -924,6 +941,11 @@ namespace Appointment_System.Migrations
             modelBuilder.Entity("Appointment_System.Models.Day", b =>
                 {
                     b.Navigation("Segments");
+                });
+
+            modelBuilder.Entity("Appointment_System.Models.Segment", b =>
+                {
+                    b.Navigation("Slots");
                 });
 
             modelBuilder.Entity("Appointment_System.Models.Service", b =>

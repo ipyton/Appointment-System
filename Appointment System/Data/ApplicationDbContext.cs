@@ -68,13 +68,29 @@ namespace Appointment_System.Data
                 .WithOne()
                 .HasForeignKey(s => s.DayId)
                 .OnDelete(DeleteBehavior.NoAction);
-
-            // Segment to Slot relationship
+            
             builder.Entity<Segment>()
-                .HasMany<Slot>()
+            .HasOne<Template>()
+            .WithMany()
+            .HasForeignKey(s => s.TemplateId)
+            .OnDelete(DeleteBehavior.NoAction);
+
+            builder.Entity<Segment>()
+            .HasOne<Day>()
+            .WithMany()
+            .HasForeignKey(s => s.DayId)
+            .OnDelete(DeleteBehavior.NoAction);
+
+
+
+
+            // Slot to Appointment relationship (one-to-one)
+            builder.Entity<Slot>()
+                .HasOne(s => s.Appointment)
                 .WithOne()
-                .HasForeignKey(s => s.DayId)
-                .OnDelete(DeleteBehavior.NoAction);
+                .HasForeignKey<Appointment>(a => a.SlotId)
+                .OnDelete(DeleteBehavior.Restrict);
+
 
             // Arrangement to Appointment relationship
             builder.Entity<Arrangement>()
@@ -90,12 +106,7 @@ namespace Appointment_System.Data
                 .HasForeignKey<Appointment>(a => a.BillId)
                 .OnDelete(DeleteBehavior.NoAction);
 
-            // Slot to Appointment relationship (one-to-one)
-            builder.Entity<Slot>()
-                .HasOne(s => s.Appointment)
-                .WithOne()
-                .HasForeignKey<Appointment>(a => a.SlotId)
-                .OnDelete(DeleteBehavior.Restrict);
+
 
             // Configure Message
             builder.Entity<Message>()

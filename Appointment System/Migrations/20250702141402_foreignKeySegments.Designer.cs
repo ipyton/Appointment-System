@@ -4,6 +4,7 @@ using Appointment_System.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Appointment_System.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250702141402_foreignKeySegments")]
+    partial class foreignKeySegments
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -359,7 +362,7 @@ namespace Appointment_System.Migrations
                     b.Property<int>("DayId")
                         .HasColumnType("int");
 
-                    b.Property<int?>("DayId1")
+                    b.Property<int>("DayId1")
                         .HasColumnType("int");
 
                     b.Property<TimeSpan>("DurationForSingleSlot")
@@ -799,9 +802,11 @@ namespace Appointment_System.Migrations
                         .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
-                    b.HasOne("Appointment_System.Models.Day", null)
+                    b.HasOne("Appointment_System.Models.Day", "Day")
                         .WithMany("Segments")
-                        .HasForeignKey("DayId1");
+                        .HasForeignKey("DayId1")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.HasOne("Appointment_System.Models.Service", null)
                         .WithMany("Segments")
@@ -812,6 +817,8 @@ namespace Appointment_System.Migrations
                         .HasForeignKey("TemplateId")
                         .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
+
+                    b.Navigation("Day");
                 });
 
             modelBuilder.Entity("Appointment_System.Models.Service", b =>
