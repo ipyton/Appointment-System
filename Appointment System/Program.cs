@@ -4,6 +4,7 @@ using Appointment_System.Data;
 using Appointment_System.Models;
 using Appointment_System.Services;
 using Appointment_System.Middleware;
+using Appointment_System.Hubs;
 using Microsoft.Extensions.Logging;
 using TokenService = Appointment_System.Services.TokenService;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -94,6 +95,24 @@ builder.Services.AddAuthentication(options =>
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"])),
         ClockSkew = TimeSpan.Zero
     };
+    
+    // Configure the JWT Bearer authentication to send the token in SignalR
+    options.Events = new JwtBearerEvents
+    {
+        OnMessageReceived = context =>
+        {
+            var accessToken = context.Request.Query["access_token"];
+            
+            // If the request is for our hub...
+            var path = context.HttpContext.Request.Path;
+            if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/chatHub"))
+            {
+                // Read the token out of the query string
+                context.Token = accessToken;
+            }
+            return Task.CompletedTask;
+        }
+    };
 });
 
 // Add CORS services
@@ -105,6 +124,9 @@ builder.Services.AddCors(options =>
             .AllowAnyHeader()
             .AllowAnyMethod());
 });
+
+// Add SignalR services
+builder.Services.AddSignalR();
 
 // Add services to the container.
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
@@ -144,6 +166,9 @@ app.UseCors("AllowSpecificOrigins");
 
 app.UseHttpsRedirection();
 
+// Add static files middleware
+app.UseStaticFiles();
+
 // Add token validation middleware to filter all requests
 app.UseMiddleware<TokenValidationMiddleware>();
 
@@ -152,6 +177,8 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+// Map the SignalR hub
+app.MapHub<ChatHub>("/chatHub");
 
 var summaries = new[]
 {

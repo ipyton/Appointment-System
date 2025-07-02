@@ -30,5 +30,7 @@ namespace Appointment_System.Models
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         public DateTime? ReadAt { get; set; }
+
+        public string? GroupName { get; set; }
     }
 } 
