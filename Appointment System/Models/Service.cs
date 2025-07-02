@@ -43,5 +43,15 @@ namespace Appointment_System.Models
         public virtual ICollection<Segment> Segments { get; set; }
         
         public virtual ICollection<Arrangement> Arrangements { get; set; }
+        
+        /// <summary>
+        /// Maximum number of days in advance that appointments can be booked
+        /// </summary>
+        //public int BookingWindowDays { get; set; } = 30;
+
+        /// <summary>
+        /// Minimum notice period required for booking (in hours)
+        /// </summary>
+        //public int MinimumNoticeHours { get; set; } = 24;
     }
 } 

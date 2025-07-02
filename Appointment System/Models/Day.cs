@@ -32,15 +32,6 @@ namespace Appointment_System.Models
         /// </summary>
         public bool IsAvailable { get; set; } = true;
 
-        /// <summary>
-        /// Start time of availability on this day (in minutes from midnight)
-        /// </summary>
-        public int StartTimeMinutes { get; set; } = 9 * 60; // Default: 9:00 AM
-
-        /// <summary>
-        /// End time of availability on this day (in minutes from midnight)
-        /// </summary>
-        public int EndTimeMinutes { get; set; } = 17 * 60; // Default: 5:00 PM
 
         /// <summary>
         /// Collection of time segments for this day

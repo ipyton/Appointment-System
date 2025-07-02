@@ -8,10 +8,11 @@ using Microsoft.EntityFrameworkCore;
 using Appointment_System.Data;
 using Appointment_System.Models;
 using Appointment_System.Services;
+using System.Security.Claims;
 
 namespace Appointment_System.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("[controller]")]
     [ApiController]
     public class TemplateController : ControllerBase
     {
@@ -26,7 +27,7 @@ namespace Appointment_System.Controllers
 
         // GET: api/Template
         [HttpGet]
-        [Authorize(Roles = "Provider")]
+        [Authorize(Roles = "ServiceProvider")]
         public async Task<ActionResult<IEnumerable<Template>>> GetTemplates()
         {
             var providerId = User.FindFirst("sub")?.Value ?? User.Identity.Name;
@@ -34,7 +35,7 @@ namespace Appointment_System.Controllers
             return Ok(templates);
         }
 
-        // GET: api/Template/5
+        // GET: Template/5
         [HttpGet("{id}")]
         [Authorize]
         public async Task<ActionResult<Template>> GetTemplate(int id)
@@ -51,7 +52,7 @@ namespace Appointment_System.Controllers
             {
                 // Check if the template is associated with a public service
                 var isPublicService = await _context.Services
-                    .AnyAsync(s => s.ProviderId == template.ProviderId && s.IsPublic);
+                    .AnyAsync(s => s.ProviderId == template.ProviderId);
                 
                 if (!isPublicService)
                 {
@@ -62,58 +63,63 @@ namespace Appointment_System.Controllers
             return template;
         }
 
-        // POST: api/Template
-        [HttpPost]
-        [Authorize(Roles = "Provider")]
-        public async Task<ActionResult<Template>> CreateTemplate(Template template)
+
+        // PUT: Template/upsert
+        [HttpPut("upsert")]
+        [Authorize(Roles = "ServiceProvider")]
+        public async Task<IActionResult> UpsertTemplate(TemplateDTO templateDTO)
         {
-            // Ensure the provider ID is set to the current user
-            if (User.Identity.IsAuthenticated)
+            // Try multiple ways to get the user ID
+            var currentUserId = User.FindFirst("sub")?.Value 
+                ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value 
+                ?? User.Identity?.Name;
+                
+            if (string.IsNullOrEmpty(currentUserId))
             {
-                template.ProviderId = User.FindFirst("sub")?.Value ?? User.Identity.Name;
+                return BadRequest("User not authenticated");
+            }
+            
+            // Convert DTO to Template
+            var template = TemplateDTOExtensions.ToTemplate(templateDTO, currentUserId);
+            Console.WriteLine(template.Id);
+            // Check if template ID exists
+            if (template.Id > 0)
+            {
+                // Check if the template exists and belongs to the current user
+                var existingTemplate = await _context.Templates.FindAsync(template.Id);
+                if (existingTemplate == null)
+                {
+                    return NotFound();
+                } else {
+                    // Check if the current user owns this template
+                    if (existingTemplate.ProviderId != currentUserId)
+                    {
+                        return Forbid();
+                    }
+                }
+            }
+            
+            // Set provider ID and timestamps
+            template.ProviderId = currentUserId;
+            
+            // Use the service to upsert the template
+            var updatedTemplate = await _templateService.UpsertTemplateAsync(template);
+            if (template.Id == 0)
+            {
+                // New template was created
+                return Ok(new { StatusCode = 200, New = true,Id = updatedTemplate.Id, Message = $"Template with ID {updatedTemplate.Id} has been saved successfully" });
+            }
+            else
+            {
+                // Existing template was updated
+                return Ok(new { StatusCode = 200, New = false,Id = updatedTemplate.Id, Message = $"Template with ID {updatedTemplate.Id} has been saved successfully" });
             }
 
-            var createdTemplate = await _templateService.CreateTemplateAsync(template);
-            return CreatedAtAction(nameof(GetTemplate), new { id = createdTemplate.Id }, createdTemplate);
-        }
-
-        // PUT: api/Template/5
-        [HttpPut("{id}")]
-        [Authorize(Roles = "Provider")]
-        public async Task<IActionResult> UpdateTemplate(int id, Template template)
-        {
-            if (id != template.Id)
-            {
-                return BadRequest();
-            }
-
-            // Verify ownership
-            var existingTemplate = await _context.Templates.FindAsync(id);
-            if (existingTemplate == null)
-            {
-                return NotFound();
-            }
-
-            // Check if the current user owns this template
-            var currentUserId = User.FindFirst("sub")?.Value ?? User.Identity.Name;
-            if (existingTemplate.ProviderId != currentUserId)
-            {
-                return Forbid();
-            }
-
-            // Update the template
-            var success = await _templateService.UpdateTemplateAsync(template);
-            if (!success)
-            {
-                return NotFound();
-            }
-
-            return NoContent();
         }
 
         // DELETE: api/Template/5
         [HttpDelete("{id}")]
-        [Authorize(Roles = "Provider")]
+        [Authorize(Roles = "ServiceProvider")]
         public async Task<IActionResult> DeleteTemplate(int id)
         {
             // Verify ownership

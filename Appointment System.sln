@@ -1,13 +1,10 @@
-﻿
-Microsoft Visual Studio Solution File, Format Version 12.00
+﻿Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Appointment System", "Appointment System\Appointment System.csproj", "{36AFF864-4A0D-4FB3-B6CE-0436B0D103B3}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Appointment System", "Appointment System", "{AB224690-C1CA-440C-A4DD-CDE0016C922E}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Appointment.System.Tests", "Appointment System\Appointment.System.Tests\Appointment.System.Tests.csproj", "{151CB34D-6FBA-437C-A80A-3E6361E60505}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AppointmentSystem.Tests", "AppointmentSystem.Tests\AppointmentSystem.Tests.csproj", "{B364A3E4-E391-44F5-8C72-5D63ECD25A47}"
 EndProject
@@ -24,10 +21,6 @@ Global
 		{36AFF864-4A0D-4FB3-B6CE-0436B0D103B3}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{36AFF864-4A0D-4FB3-B6CE-0436B0D103B3}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{36AFF864-4A0D-4FB3-B6CE-0436B0D103B3}.Release|Any CPU.Build.0 = Release|Any CPU
-		{151CB34D-6FBA-437C-A80A-3E6361E60505}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{151CB34D-6FBA-437C-A80A-3E6361E60505}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{151CB34D-6FBA-437C-A80A-3E6361E60505}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{151CB34D-6FBA-437C-A80A-3E6361E60505}.Release|Any CPU.Build.0 = Release|Any CPU
 		{B364A3E4-E391-44F5-8C72-5D63ECD25A47}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{B364A3E4-E391-44F5-8C72-5D63ECD25A47}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B364A3E4-E391-44F5-8C72-5D63ECD25A47}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -35,6 +28,5 @@ Global
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{36AFF864-4A0D-4FB3-B6CE-0436B0D103B3} = {AB224690-C1CA-440C-A4DD-CDE0016C922E}
-		{151CB34D-6FBA-437C-A80A-3E6361E60505} = {AB224690-C1CA-440C-A4DD-CDE0016C922E}
 	EndGlobalSection
 EndGlobal
