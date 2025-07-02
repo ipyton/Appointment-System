@@ -108,7 +108,6 @@ namespace Appointment_System.Services
                 throw new ArgumentException("Service not found");
 
             // Calculate end time based on service duration
-            var endTime = startTime.AddMinutes(service.DurationMinutes);
 
             // Check if the slot is available
             // Create the appointment
@@ -118,56 +117,38 @@ namespace Appointment_System.Services
                 ServiceId = serviceId,
                 AppointmentDate = startTime.Date,
                 StartTime = startTime,
-                EndTime = endTime,
                 Status = AppointmentStatus.Pending,
                 CreatedAt = DateTime.UtcNow
             };
 
-            _context.Appointments.Add(appointment);
-            await _context.SaveChangesAsync();
+            // _context.Appointments.Add(appointment);
+            // await _context.SaveChangesAsync();
 
-            // Create a bill for the appointment
-            var bill = new Bill
-            {
-                AppointmentId = appointment.Id,
-                Amount = service.Price,
-                Tax = service.Price * 0.1m, // Assuming 10% tax
-                TotalAmount = service.Price * 1.1m,
-                Status = BillStatus.Pending,
-                CreatedAt = DateTime.UtcNow
-            };
+            // // Create a bill for the appointment
+            // var bill = new Bill
+            // {
+            //     AppointmentId = appointment.Id,
+            //     Amount = service.Price,
+            //     Tax = service.Price * 0.1m, // Assuming 10% tax
+            //     TotalAmount = service.Price * 1.1m,
+            //     Status = BillStatus.Pending,
+            //     CreatedAt = DateTime.UtcNow
+            // };
 
-            _context.Bills.Add(bill);
-            await _context.SaveChangesAsync();
+            // _context.Bills.Add(bill);
+            // await _context.SaveChangesAsync();
 
             _logger.LogInformation("Appointment booked: {AppointmentId} for user {UserId}", appointment.Id, userId);
             return appointment;
         }
 
-       
-        /// <summary>
-        /// Get user's appointments
-        /// </summary>
-        public async Task<List<Appointment>> GetUserAppointmentsAsync(string userId)
-        {
-            return await _context.Appointments
-                .Where(a => a.UserId == userId)
-                .Include(a => a.Service)
-                .Include(a => a.Bills)
-                .OrderByDescending(a => a.AppointmentDate)
-                .ToListAsync();
-        }
-
         /// <summary>
         /// Get appointment details
         /// </summary>
-        public async Task<Appointment> GetAppointmentDetailsAsync(int appointmentId, string userId)
+        public async Task<Appointment> GetAppointmentDetailsAsync(int appointmentId)
         {
             return await _context.Appointments
-                .Include(a => a.Service)
-                    .ThenInclude(s => s.Provider)
-                .Include(a => a.Bills)
-                .FirstOrDefaultAsync(a => a.Id == appointmentId && a.UserId == userId);
+                .FirstOrDefaultAsync(a => a.Id == appointmentId);
         }
 
         /// <summary>

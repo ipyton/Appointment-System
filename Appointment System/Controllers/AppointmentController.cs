@@ -63,9 +63,6 @@ namespace Appointment_System.Controllers
         {
             var templates = await _context.Arrangements
                 .Where(a => a.ServiceId == id)
-                .Include(a => a.Template)
-                    .ThenInclude(t => t.Days)
-                .Select(a => a.Template)
                 .ToListAsync();
                 
             return Ok(templates);
@@ -93,12 +90,12 @@ namespace Appointment_System.Controllers
             return Ok(segments);
         }
 
-        [HttpGet("segments/{id}/slots")]
+        [HttpGet("slots")]
         [AllowAnonymous]
-        public async Task<IActionResult> GetSegmentSlots(int id)
+        public async Task<IActionResult> GetSlots(DateOnly date, int serviceId)
         {
             var slots = await _context.Slots
-                .Where(s => s.DayId == id && s.Appointment == null)
+                .Where(s => s.Date == date && s.ServiceId == serviceId && s.IsAvailable == true)
                 .ToListAsync();
                 
             return Ok(slots);
@@ -120,24 +117,15 @@ namespace Appointment_System.Controllers
                     return NotFound(new { message = "Service not found" });
                 
                 // Check if slot exists and is available
-                var slot = await _context.Slots.Include(s => s.Appointment)
+                var slot = await _context.Slots
                     .FirstOrDefaultAsync(s => s.Id == dto.SlotId);
                     
                 if (slot == null)
                     return NotFound(new { message = "Slot not found" });
                     
-                if (slot.Appointment != null)
+                if (slot.IsAvailable == false)
                     return BadRequest(new { message = "Slot is already booked" });
                 
-                // Create a bill
-                var bill = new Bill
-                {
-                    Amount = service.Price,
-                    Status = BillStatus.Pending,
-                    CreatedAt = DateTime.UtcNow
-                };
-                
-                _context.Bills.Add(bill);
                 await _context.SaveChangesAsync();
                 
                 // Create appointment
@@ -145,14 +133,10 @@ namespace Appointment_System.Controllers
                 {
                     UserId = userId,
                     ServiceId = dto.ServiceId,
-                    TemplateId = dto.TemplateId,
                     SlotId = dto.SlotId,
-                    DayId = dto.DayId,
-                    SegmentId = dto.SegmentId,
                     Notes = dto.Notes,
                     Status = AppointmentStatus.Pending,
                     CreatedAt = DateTime.UtcNow,
-                    BillId = bill.Id
                 };
                 
                 _context.Appointments.Add(appointment);
@@ -174,7 +158,6 @@ namespace Appointment_System.Controllers
             
             var appointments = await _context.Appointments
                 .Where(a => a.UserId == userId)
-                .Include(a => a.Bill)
                 .ToListAsync();
                 
             return Ok(appointments);
@@ -186,7 +169,6 @@ namespace Appointment_System.Controllers
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             
             var appointment = await _context.Appointments
-                .Include(a => a.Bill)
                 .FirstOrDefaultAsync(a => a.Id == id && a.UserId == userId);
             
             if (appointment == null)
@@ -203,7 +185,6 @@ namespace Appointment_System.Controllers
                 var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
                 
                 var appointment = await _context.Appointments
-                    .Include(a => a.Bill)
                     .FirstOrDefaultAsync(a => a.Id == id && a.UserId == userId);
                 
                 if (appointment == null)
@@ -217,12 +198,7 @@ namespace Appointment_System.Controllers
                 appointment.Status = AppointmentStatus.Cancelled;
                 appointment.UpdatedAt = DateTime.UtcNow;
                 
-                // Update bill status
-                if (appointment.Bill.Status == BillStatus.Pending)
-                {
-                    appointment.Bill.Status = BillStatus.Cancelled;
-                    appointment.Bill.UpdatedAt = DateTime.UtcNow;
-                }
+                
                 
                 await _context.SaveChangesAsync();
                 

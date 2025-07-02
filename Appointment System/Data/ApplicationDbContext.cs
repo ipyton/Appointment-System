@@ -30,16 +30,10 @@ namespace Appointment_System.Data
 
             // Configure relationships for ApplicationUser
             builder.Entity<ApplicationUser>()
-                .HasMany(u => u.Services)
-                .WithOne(s => s.Provider)
-                .HasForeignKey(s => s.ProviderId)
-                .OnDelete(DeleteBehavior.NoAction);
-
-            builder.Entity<ApplicationUser>()
-                .HasMany(u => u.UserAppointments)
-                .WithOne(a => a.User)
+                .HasMany<Appointment>()
+                .WithOne()
                 .HasForeignKey(a => a.UserId)
-                .OnDelete(DeleteBehavior.Restrict);
+                .OnDelete(DeleteBehavior.NoAction);
 
             // Service to Arrangement relationship
             builder.Entity<Service>()
@@ -86,22 +80,17 @@ namespace Appointment_System.Data
 
             // Slot to Appointment relationship (one-to-one)
             builder.Entity<Slot>()
-                .HasOne(s => s.Appointment)
+                .HasOne<Appointment>()
                 .WithOne()
                 .HasForeignKey<Appointment>(a => a.SlotId)
                 .OnDelete(DeleteBehavior.Restrict);
 
 
-            // Arrangement to Appointment relationship
-            builder.Entity<Arrangement>()
-                .HasMany<Appointment>()
-                .WithOne()
-                .HasForeignKey(a => a.TemplateId)
-                .OnDelete(DeleteBehavior.Restrict);
+
 
             // Configure Appointment
             builder.Entity<Appointment>()
-                .HasOne(a => a.Bill)
+                .HasOne<Bill>()
                 .WithOne()
                 .HasForeignKey<Appointment>(a => a.BillId)
                 .OnDelete(DeleteBehavior.NoAction);
@@ -121,11 +110,25 @@ namespace Appointment_System.Data
                 .HasForeignKey(m => m.SenderId)
                 .OnDelete(DeleteBehavior.Restrict);
 
+            builder.Entity<Service>()
+                .HasMany<Arrangement>()
+                .WithOne()
+                .HasForeignKey(a => a.ServiceId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            builder.Entity<Slot>()
+                .HasOne<Service>()
+                .WithMany()
+                .HasForeignKey(a => a.ServiceId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+
             builder.Entity<TokenRecord>()
                 .HasOne<ApplicationUser>()
                 .WithMany()
                 .HasForeignKey(tr => tr.ApplicationUserId)
                 .OnDelete(DeleteBehavior.NoAction);
+
         }
     }
 } 
