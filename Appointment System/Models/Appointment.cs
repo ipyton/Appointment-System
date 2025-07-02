@@ -16,22 +16,17 @@ namespace Appointment_System.Models
 
 
         [Required]
-        public int ServiceId { get; set; }
-
         [ForeignKey("ServiceId")]
         public int ServiceId { get; set; }
-         
+
+
         [Required]
-        public int TemplateId {get; set;}
+        [ForeignKey("ProviderId")]
+        public int ProviderId { get; set; }
+
 
         [Required]
         public int SlotId { get; set; }
-
-        [Required]
-        public int DayId { get; set; }
-        
-        [Required]
-        public int SegmentId { get; set; }
 
         [StringLength(500)]
         public string Notes { get; set; }

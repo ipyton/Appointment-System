@@ -116,7 +116,6 @@ namespace Appointment_System.Controllers
             existingService.Name = service.Name;
             existingService.Description = service.Description;
             existingService.Price = service.Price;
-            existingService.DurationMinutes = service.DurationMinutes;
             existingService.IsActive = service.IsActive;
             existingService.UpdatedAt = DateTime.UtcNow;
 

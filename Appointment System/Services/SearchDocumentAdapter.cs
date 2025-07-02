@@ -40,11 +40,9 @@ namespace Appointment_System.Services
                 ["name"] = service.Name,
                 ["description"] = service.Description,
                 ["price"] = service.Price,
-                ["durationMinutes"] = service.DurationMinutes,
                 ["providerId"] = service.ProviderId,
                 ["isActive"] = service.IsActive,
                 ["createdAt"] = service.CreatedAt,
-                ["tags"] = GetServiceTags(service)
             };
         }
 
@@ -72,32 +70,6 @@ namespace Appointment_System.Services
                 tags.Add("ServiceProvider");
             else
                 tags.Add("Client");
-
-            return tags;
-        }
-
-        private static List<string> GetServiceTags(Service service)
-        {
-            var tags = new List<string>();
-
-            // Add price range tags
-            if (service.Price < 50)
-                tags.Add("PriceLow");
-            else if (service.Price < 100)
-                tags.Add("PriceMedium");
-            else
-                tags.Add("PriceHigh");
-
-            // Add duration tags
-            if (service.DurationMinutes <= 30)
-                tags.Add("DurationShort");
-            else if (service.DurationMinutes <= 60)
-                tags.Add("DurationMedium");
-            else
-                tags.Add("DurationLong");
-
-            if (service.IsActive)
-                tags.Add("Active");
 
             return tags;
         }

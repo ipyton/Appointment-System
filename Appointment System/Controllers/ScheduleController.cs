@@ -156,111 +156,25 @@ namespace Appointment_System.Controllers
         //     return Ok(segment);
         // }
 
-        [HttpPost("arrangements")]
-        public async Task<IActionResult> CreateArrangement([FromBody] ArrangementDto dto)
-        {
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
-                
-            var providerId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            
-            // Check if service exists and belongs to the provider
-            var service = await _context.Services
-                .FirstOrDefaultAsync(s => s.Id == dto.ServiceId && s.ProviderId == providerId);
-                
-            if (service == null)
-                return NotFound(new { message = "Service not found" });
-                
-            // Check if template exists and belongs to the provider
-            var template = await _context.Templates
-                .FirstOrDefaultAsync(t => t.Id == dto.TemplateId && t.ProviderId == providerId);
-                
-            if (template == null)
-                return NotFound(new { message = "Template not found" });
-                
-            var arrangement = new Arrangement
-            {
-                ServiceId = dto.ServiceId,
-                TemplateId = dto.TemplateId,
-                StartDateTime = dto.StartDateTime,
-                RepeatTimes = dto.RepeatTimes,
-                RepeatInterval = dto.RepeatInterval
-            };
-            
-            _context.Arrangements.Add(arrangement);
-            await _context.SaveChangesAsync();
-            
-            return Ok(arrangement);
-        }
 
-        [HttpGet("arrangements")]
-        public async Task<IActionResult> GetProviderArrangements()
-        {
-            var providerId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            
-            var arrangements = await _context.Arrangements
-                .Include(a => a.Service)
-                .Include(a => a.Template)
-                .Where(a => a.Service.ProviderId == providerId)
-                .ToListAsync();
-                
-            return Ok(arrangements);
-        }
+
 
         [HttpGet("appointments")]
-        public async Task<IActionResult> GetProviderAppointments([FromQuery] DateTime? startDate, [FromQuery] DateTime? endDate)
+        public async Task<IActionResult> GetProviderAppointments([FromQuery] DateTime? startDate, [FromQuery] DateTime? endDate, int providerId)
         {
-            var providerId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             
             var query = _context.Appointments
-                .Include(a => a.Bill)
-                .Where(a => a.Service.ProviderId == providerId);
+                .Where(a => a.ProviderId == providerId);
                 
             if (startDate.HasValue)
-                query = query.Where(a => a.CreatedAt >= startDate.Value);
+                query = query.Where(a => a.AppointmentDate >= startDate.Value);
                 
             if (endDate.HasValue)
-                query = query.Where(a => a.CreatedAt <= endDate.Value);
+                query = query.Where(a => a.AppointmentDate <= endDate.Value);
                 
             var appointments = await query.ToListAsync();
             
             return Ok(appointments);
-        }
-
-        [HttpPut("appointments/{id}/status")]
-        public async Task<IActionResult> UpdateAppointmentStatus(int id, [FromBody] UpdateStatusDto dto)
-        {
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
-                
-            var providerId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            
-            var appointment = await _context.Appointments
-                .Include(a => a.Bill)
-                .Include(a => a.Service)
-                .FirstOrDefaultAsync(a => a.Id == id && a.Service.ProviderId == providerId);
-                
-            if (appointment == null)
-                return NotFound(new { message = "Appointment not found" });
-                
-            appointment.Status = dto.Status;
-            appointment.UpdatedAt = DateTime.UtcNow;
-            
-            // Update bill status if needed
-            if (dto.Status == AppointmentStatus.Completed && appointment.Bill.Status == BillStatus.Pending)
-            {
-                appointment.Bill.Status = BillStatus.Paid;
-                appointment.Bill.UpdatedAt = DateTime.UtcNow;
-            }
-            else if (dto.Status == AppointmentStatus.Cancelled && appointment.Bill.Status == BillStatus.Pending)
-            {
-                appointment.Bill.Status = BillStatus.Cancelled;
-                appointment.Bill.UpdatedAt = DateTime.UtcNow;
-            }
-            
-            await _context.SaveChangesAsync();
-            
-            return Ok(appointment);
         }
     }
 

@@ -23,17 +23,11 @@ namespace Appointment_System.Models
         
         public string BusinessDescription { get; set; }
 
-        //public ICollection<TokenRecord> TokenRecords { get; set; }
         
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         
         public DateTime? UpdatedAt { get; set; }
         
-        // Navigation properties
-        public virtual ICollection<Service> Services { get; set; }
-        
-        public virtual ICollection<Appointment> UserAppointments { get; set; }
-        
-        public virtual ICollection<Appointment> ProviderAppointments { get; set; }
+
     }
 } 

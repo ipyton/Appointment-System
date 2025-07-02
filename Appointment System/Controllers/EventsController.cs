@@ -57,7 +57,6 @@ namespace Appointment_System.Controllers
                     Name = dto.Name,
                     Description = dto.Description,
                     Price = dto.Price,
-                    DurationMinutes = dto.DurationMinutes,
                     ProviderId = providerId,
                     IsActive = true,
                     CreatedAt = DateTime.UtcNow
@@ -101,7 +100,6 @@ namespace Appointment_System.Controllers
                     Name = dto.Name,
                     Description = dto.Description,
                     Price = dto.Price,
-                    DurationMinutes = dto.DurationMinutes,
                     ProviderId = providerId,
                     IsActive = dto.IsActive,
                     UpdatedAt = DateTime.UtcNow
@@ -255,9 +253,9 @@ namespace Appointment_System.Controllers
         }
 
         [HttpGet("appointments")]
-        public async Task<IActionResult> GetProviderAppointments([FromQuery] DateTime? startDate, [FromQuery] DateTime? endDate)
+        public async Task<IActionResult> GetProviderAppointments([FromQuery] DateTime? startDate, [FromQuery] DateTime? endDate, int providerId)
         {
-            var providerId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            //var providerId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             var appointments = await _providerService.GetProviderAppointmentsAsync(providerId, startDate, endDate);
             return Ok(appointments);
         }

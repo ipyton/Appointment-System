@@ -73,8 +73,6 @@ namespace Appointment_System.Services
             existingService.Name = service.Name;
             existingService.Description = service.Description;
             existingService.Price = service.Price;
-            existingService.DurationMinutes = service.DurationMinutes;
-            existingService.IsActive = service.IsActive;
             existingService.UpdatedAt = DateTime.UtcNow;
 
             _context.Services.Update(existingService);
@@ -122,13 +120,10 @@ namespace Appointment_System.Services
         /// <summary>
         /// Get provider's appointments
         /// </summary>
-        public async Task<List<Appointment>> GetProviderAppointmentsAsync(string providerId, DateTime? startDate = null, DateTime? endDate = null)
+        public async Task<List<Appointment>> GetProviderAppointmentsAsync(int providerId, DateTime? startDate = null, DateTime? endDate = null)
         {
             var query = _context.Appointments
-                .Include(a => a.Service)
-                .Include(a => a.User)
-                .Include(a => a.Bills)
-                .Where(a => a.Service.ProviderId == providerId);
+                .Where(a => a.ProviderId == providerId);
 
             if (startDate.HasValue)
                 query = query.Where(a => a.AppointmentDate >= startDate.Value.Date);
@@ -148,10 +143,7 @@ namespace Appointment_System.Services
         public async Task<Appointment> GetAppointmentDetailsAsync(int appointmentId, string providerId)
         {
             return await _context.Appointments
-                .Include(a => a.Service)
-                .Include(a => a.User)
-                .Include(a => a.Bills)
-                .FirstOrDefaultAsync(a => a.Id == appointmentId && a.Service.ProviderId == providerId);
+                .FirstOrDefaultAsync(a => a.Id == appointmentId );
         }
 
         /// <summary>
@@ -160,9 +152,7 @@ namespace Appointment_System.Services
         public async Task<Appointment> UpdateAppointmentStatusAsync(int appointmentId, string providerId, AppointmentStatus status)
         {
             var appointment = await _context.Appointments
-                .Include(a => a.Service)
-                .Include(a => a.Bills)
-                .FirstOrDefaultAsync(a => a.Id == appointmentId && a.Service.ProviderId == providerId);
+                .FirstOrDefaultAsync(a => a.Id == appointmentId);
 
             if (appointment == null)
                 throw new ArgumentException($"Appointment with ID {appointmentId} not found or you are not authorized");

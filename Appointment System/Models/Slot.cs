@@ -14,7 +14,7 @@ namespace Appointment_System.Models
 
 
         [Required]
-        public int ArrangementId { get; set; }
+        public int ServiceId { get; set; }
 
 
         [Required]
