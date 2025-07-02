@@ -35,9 +35,85 @@ namespace Appointment_System.Controllers
             return Ok(templates);
         }
 
-        // GET: Template/5
+        // GET: Template/byUser/{userId}
+        [HttpGet("byUser/{userId}")]
+        [Authorize]
+        public async Task<ActionResult<IEnumerable<Template>>> GetTemplatesByUserId(string userId)
+        {
+            if (string.IsNullOrEmpty(userId))
+            {
+                return BadRequest("User ID cannot be empty");
+            }
+
+            var templates = await _templateService.GetTemplatesForProviderAsync(userId);
+            
+            if (templates == null || !templates.Any())
+            {
+                return NotFound($"No templates found for user with ID {userId}");
+            }
+
+            return Ok(templates);
+        }
+
+        // GET: Template/myTemplates
+        [HttpGet("get")]
+        [Authorize]
+        public async Task<ActionResult<IEnumerable<Template>>> GetMyTemplates()
+        {
+            var userId = User.FindFirst("sub")?.Value ?? 
+                         User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? 
+                         User.Identity?.Name;
+
+            if (string.IsNullOrEmpty(userId))
+            {
+                return BadRequest("User ID could not be determined from token");
+            }
+
+            var templates = await _templateService.GetTemplatesForProviderAsync(userId);
+            
+            if (templates == null || !templates.Any())
+            {
+                return NotFound("No templates found for your user account");
+            }
+
+            return Ok(templates);
+        }
+
+        // GET: Template/{id}
         [HttpGet("{id}")]
         [Authorize]
+        public async Task<ActionResult<Template>> GetTemplateById(int id)
+        {
+            var template = await _templateService.GetTemplateWithDetailsAsync(id);
+
+            if (template == null)
+            {
+                return NotFound($"Template with ID {id} not found");
+            }
+
+            // Check if the user has access to this template
+            var currentUserId = User.FindFirst("sub")?.Value ?? User.Identity?.Name;
+            
+            // If the user is the owner or an admin, allow access
+            if (template.ProviderId == currentUserId || User.IsInRole("Administrator"))
+            {
+                return Ok(template);
+            }
+            
+            // Otherwise, check if the template is associated with a public service
+            var isPublicService = await _context.Services
+                .AnyAsync(s => s.ProviderId == template.ProviderId);
+            
+            if (!isPublicService)
+            {
+                return Forbid();
+            }
+
+            return Ok(template);
+        }
+
+        [HttpGet("get/{id}")]
+        [Authorize(Roles = "ServiceProvider")]
         public async Task<ActionResult<Template>> GetTemplate(int id)
         {
             var template = await _templateService.GetTemplateWithDetailsAsync(id);

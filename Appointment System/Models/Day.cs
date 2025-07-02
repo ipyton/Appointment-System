@@ -24,9 +24,6 @@ namespace Appointment_System.Models
         /// </summary>
         public int TemplateId { get; set; }
         
-        [ForeignKey("TemplateId")]
-        public Template Template { get; set; }
-
         /// <summary>
         /// Whether this day is available for appointments
         /// </summary>
