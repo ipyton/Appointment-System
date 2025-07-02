@@ -50,6 +50,7 @@ builder.Services.AddScoped<AzureSearchService>();
 builder.Services.AddScoped<SearchIndexingEventHandler>();
 builder.Services.AddScoped<AppointmentClientService>();
 builder.Services.AddScoped<AppointmentProviderService>();
+builder.Services.AddScoped<TemplateService>();
 
 // Register background services
 builder.Services.AddHostedService<SearchIndexingService>();

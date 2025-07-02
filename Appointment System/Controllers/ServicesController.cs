@@ -13,7 +13,7 @@ using Appointment_System.Services;
 namespace Appointment_System.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("[controller]")]
     public class ServicesController : ControllerBase
     {
         private readonly ApplicationDbContext _context;

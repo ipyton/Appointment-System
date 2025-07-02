@@ -1,0 +1,15 @@
+/Users/noah/Appointment System/SimpleTestsDemo/bin/Debug/net8.0/SimpleTestsDemo
+/Users/noah/Appointment System/SimpleTestsDemo/bin/Debug/net8.0/SimpleTestsDemo.deps.json
+/Users/noah/Appointment System/SimpleTestsDemo/bin/Debug/net8.0/SimpleTestsDemo.runtimeconfig.json
+/Users/noah/Appointment System/SimpleTestsDemo/bin/Debug/net8.0/SimpleTestsDemo.dll
+/Users/noah/Appointment System/SimpleTestsDemo/bin/Debug/net8.0/SimpleTestsDemo.pdb
+/Users/noah/Appointment System/SimpleTestsDemo/obj/Debug/net8.0/SimpleTestsDemo.GeneratedMSBuildEditorConfig.editorconfig
+/Users/noah/Appointment System/SimpleTestsDemo/obj/Debug/net8.0/SimpleTestsDemo.AssemblyInfoInputs.cache
+/Users/noah/Appointment System/SimpleTestsDemo/obj/Debug/net8.0/SimpleTestsDemo.AssemblyInfo.cs
+/Users/noah/Appointment System/SimpleTestsDemo/obj/Debug/net8.0/SimpleTestsDemo.csproj.CoreCompileInputs.cache
+/Users/noah/Appointment System/SimpleTestsDemo/obj/Debug/net8.0/SimpleTestsDemo.sourcelink.json
+/Users/noah/Appointment System/SimpleTestsDemo/obj/Debug/net8.0/SimpleTestsDemo.dll
+/Users/noah/Appointment System/SimpleTestsDemo/obj/Debug/net8.0/refint/SimpleTestsDemo.dll
+/Users/noah/Appointment System/SimpleTestsDemo/obj/Debug/net8.0/SimpleTestsDemo.pdb
+/Users/noah/Appointment System/SimpleTestsDemo/obj/Debug/net8.0/SimpleTestsDemo.genruntimeconfig.cache
+/Users/noah/Appointment System/SimpleTestsDemo/obj/Debug/net8.0/ref/SimpleTestsDemo.dll
