@@ -1,0 +1,15 @@
+/Users/noah/Appointment System/Appointment System/SimpleTests/TestConsole/bin/Debug/net8.0/TestConsole
+/Users/noah/Appointment System/Appointment System/SimpleTests/TestConsole/bin/Debug/net8.0/TestConsole.deps.json
+/Users/noah/Appointment System/Appointment System/SimpleTests/TestConsole/bin/Debug/net8.0/TestConsole.runtimeconfig.json
+/Users/noah/Appointment System/Appointment System/SimpleTests/TestConsole/bin/Debug/net8.0/TestConsole.dll
+/Users/noah/Appointment System/Appointment System/SimpleTests/TestConsole/bin/Debug/net8.0/TestConsole.pdb
+/Users/noah/Appointment System/Appointment System/SimpleTests/TestConsole/obj/Debug/net8.0/TestConsole.GeneratedMSBuildEditorConfig.editorconfig
+/Users/noah/Appointment System/Appointment System/SimpleTests/TestConsole/obj/Debug/net8.0/TestConsole.AssemblyInfoInputs.cache
+/Users/noah/Appointment System/Appointment System/SimpleTests/TestConsole/obj/Debug/net8.0/TestConsole.AssemblyInfo.cs
+/Users/noah/Appointment System/Appointment System/SimpleTests/TestConsole/obj/Debug/net8.0/TestConsole.csproj.CoreCompileInputs.cache
+/Users/noah/Appointment System/Appointment System/SimpleTests/TestConsole/obj/Debug/net8.0/TestConsole.sourcelink.json
+/Users/noah/Appointment System/Appointment System/SimpleTests/TestConsole/obj/Debug/net8.0/TestConsole.dll
+/Users/noah/Appointment System/Appointment System/SimpleTests/TestConsole/obj/Debug/net8.0/refint/TestConsole.dll
+/Users/noah/Appointment System/Appointment System/SimpleTests/TestConsole/obj/Debug/net8.0/TestConsole.pdb
+/Users/noah/Appointment System/Appointment System/SimpleTests/TestConsole/obj/Debug/net8.0/TestConsole.genruntimeconfig.cache
+/Users/noah/Appointment System/Appointment System/SimpleTests/TestConsole/obj/Debug/net8.0/ref/TestConsole.dll
