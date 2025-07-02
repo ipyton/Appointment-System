@@ -10,6 +10,8 @@ The test project is organized to mirror the structure of the main application:
 AppointmentSystem.Tests/
 ├── Controllers/           # Tests for controllers
 ├── Services/              # Tests for services
+├── Models/                # Tests for models
+├── Integration/           # Integration tests
 └── Helpers/               # Test helper classes
 ```
 
@@ -94,6 +96,8 @@ controller.ControllerContext = new ControllerContext
 3. **Test Edge Cases**: Include tests for error conditions and edge cases.
 4. **Keep Tests Independent**: Each test should be able to run independently of others.
 5. **Use Fresh Data**: Use a new database instance for each test to avoid interference.
+6. **Avoid Test Duplication**: Don't create multiple tests that verify the same functionality.
+7. **Test One Thing at a Time**: Each test should verify a single aspect of behavior.
 
 ## Troubleshooting
 
@@ -114,4 +118,18 @@ When adding new tests:
 1. Follow the existing structure and naming conventions.
 2. Create a new test class for each controller or service.
 3. Use the `DatabaseHelper` class to get an in-memory database context.
-4. Follow the Arrange-Act-Assert pattern for test structure. 
+4. Follow the Arrange-Act-Assert pattern for test structure.
+
+## Consolidated Testing Approach
+
+This test project consolidates all testing approaches for the Appointment System:
+
+1. **Standard xUnit Tests**: Most tests use the standard xUnit testing framework.
+2. **In-Memory Database Tests**: Database tests use EF Core's in-memory provider.
+3. **Mocked Dependencies**: Services and external dependencies are mocked when appropriate.
+
+By keeping all tests in a single project with a consistent structure, we make it easier to:
+- Maintain the test suite
+- Find and run specific tests
+- Ensure consistent test coverage
+- Avoid duplication of test code and setup logic 

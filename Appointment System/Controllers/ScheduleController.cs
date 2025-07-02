@@ -104,57 +104,57 @@ namespace Appointment_System.Controllers
             return Ok(day);
         }
 
-        [HttpPost("days/{dayId}/segments")]
-        public async Task<IActionResult> AddSegmentToDay(int dayId, [FromBody] SegmentDto dto)
-        {
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
+        // [HttpPost("days/{dayId}/segments")]
+        // public async Task<IActionResult> AddSegmentToDay(int dayId, [FromBody] SegmentDto dto)
+        // {
+        //     if (!ModelState.IsValid)
+        //         return BadRequest(ModelState);
                 
-            var providerId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        //     var providerId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             
-            var day = await _context.Days
-                .Include(d => d.Template)
-                .FirstOrDefaultAsync(d => d.Id == dayId);
+        //     var day = await _context.Days
+        //         .Include(d => d.Template)
+        //         .FirstOrDefaultAsync(d => d.Id == dayId);
                 
-            if (day == null)
-                return NotFound(new { message = "Day not found" });
+        //     if (day == null)
+        //         return NotFound(new { message = "Day not found" });
                 
-            if (day.Template.ProviderId != providerId)
-                return Forbid();
+        //     if (day.Template.ProviderId != providerId)
+        //         return Forbid();
                 
-            if (dto.StartTime >= dto.EndTime)
-                return BadRequest(new { message = "End time must be after start time" });
+        //     if (dto.StartTime >= dto.EndTime)
+        //         return BadRequest(new { message = "End time must be after start time" });
                 
-            var segment = new Segment
-            {
-                DayId = dayId,
-                TemplateId = day.TemplateId,
-                StartTime = dto.StartTime,
-                EndTime = dto.EndTime,
-                DurationForSingleSlot = dto.DurationForSingleSlot
-            };
+        //     var segment = new Segment
+        //     {
+        //         DayId = dayId,
+        //         TemplateId = day.TemplateId,
+        //         StartTime = dto.StartTime,
+        //         EndTime = dto.EndTime,
+        //         DurationForSingleSlot = dto.DurationForSingleSlot
+        //     };
             
-            _context.Segments.Add(segment);
-            await _context.SaveChangesAsync();
+        //     _context.Segments.Add(segment);
+        //     await _context.SaveChangesAsync();
             
-            // Create slots for this segment
-            var currentTime = segment.StartTime;
-            while (currentTime.AddMinutes(segment.DurationForSingleSlot.TotalMinutes) <= segment.EndTime)
-            {
-                var slot = new Slot
-                {
-                    DayId = dayId,
-                    duration = segment.DurationForSingleSlot
-                };
+        //     // Create slots for this segment
+        //     var currentTime = segment.StartTime;
+        //     while (currentTime.AddMinutes(segment.DurationForSingleSlot.TotalMinutes) <= segment.EndTime)
+        //     {
+        //         var slot = new Slot
+        //         {
+        //             DayId = dayId,
+        //             duration = segment.DurationForSingleSlot
+        //         };
                 
-                _context.Slots.Add(slot);
-                currentTime = currentTime.AddMinutes(segment.DurationForSingleSlot.TotalMinutes);
-            }
+        //         _context.Slots.Add(slot);
+        //         currentTime = currentTime.AddMinutes(segment.DurationForSingleSlot.TotalMinutes);
+        //     }
             
-            await _context.SaveChangesAsync();
+        //     await _context.SaveChangesAsync();
             
-            return Ok(segment);
-        }
+        //     return Ok(segment);
+        // }
 
         [HttpPost("arrangements")]
         public async Task<IActionResult> CreateArrangement([FromBody] ArrangementDto dto)

@@ -40,23 +40,16 @@ namespace Appointment_System.Services
         }
 
         /// <summary>
-        /// Creates a new template with default days
+        /// Creates a new template
         /// </summary>
         public async Task<Template> CreateTemplateAsync(Template template)
         {
             // Set creation date
             template.CreatedAt = DateTime.UtcNow;
+            template.UpdatedAt = DateTime.UtcNow;
             
-            // Add the template to the database
             _context.Templates.Add(template);
             await _context.SaveChangesAsync();
-            
-            // Create default days if not provided
-            if (template.Days == null || !template.Days.Any())
-            {
-                template.Days = CreateDefaultDays(template.Id);
-                await _context.SaveChangesAsync();
-            }
             
             return template;
         }
@@ -84,6 +77,30 @@ namespace Appointment_System.Services
                 }
                 throw;
             }
+        }
+
+        /// <summary>
+        /// Creates or updates a template based on whether it exists
+        /// </summary>
+        public async Task<Template> UpsertTemplateAsync(Template template)
+        {
+            if (template.Id > 0 && await TemplateExistsAsync(template.Id))
+            {
+                // Update existing template
+                template.UpdatedAt = DateTime.UtcNow;
+                _context.Entry(template).State = EntityState.Modified;
+                await _context.SaveChangesAsync();
+            }
+            else
+            {
+                // Create new template
+                template.CreatedAt = DateTime.UtcNow;
+                template.UpdatedAt = DateTime.UtcNow;
+                _context.Templates.Add(template);
+                await _context.SaveChangesAsync();
+            }
+            
+            return template;
         }
 
         /// <summary>
@@ -116,35 +133,6 @@ namespace Appointment_System.Services
         private async Task<bool> TemplateExistsAsync(int templateId)
         {
             return await _context.Templates.AnyAsync(t => t.Id == templateId);
-        }
-
-        /// <summary>
-        /// Creates default days for a template
-        /// </summary>
-        private ICollection<Day> CreateDefaultDays(int templateId)
-        {
-            var days = new List<Day>();
-            
-            // Create 7 days (0 = Sunday, 1 = Monday, ..., 6 = Saturday)
-            for (int i = 0; i < 7; i++)
-            {
-                // By default, weekends are not available
-                bool isAvailable = i != 0 && i != 6;
-                
-                var day = new Day
-                {
-                    TemplateId = templateId,
-                    Index = i,
-                    IsAvailable = isAvailable,
-                    StartTimeMinutes = 9 * 60, // 9:00 AM
-                    EndTimeMinutes = 17 * 60   // 5:00 PM
-                };
-                
-                days.Add(day);
-                _context.Days.Add(day);
-            }
-            
-            return days;
         }
     }
 } 

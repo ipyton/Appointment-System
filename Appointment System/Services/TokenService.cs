@@ -11,6 +11,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using System.Security.Claims;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Appointment_System.Services
 {
@@ -18,11 +19,13 @@ namespace Appointment_System.Services
     {
         private readonly ApplicationDbContext _context;
         private readonly IConfiguration _config;
+        private readonly UserManager<ApplicationUser> _userManager;
 
-        public TokenService(ApplicationDbContext context, IConfiguration config)
+        public TokenService(ApplicationDbContext context, IConfiguration config, UserManager<ApplicationUser> userManager)
         {
             _context = context;
             _config = config;
+            _userManager = userManager;
         }
 
         public async Task<IdentityResult> ValidateToken(string token)
@@ -83,6 +86,9 @@ namespace Appointment_System.Services
 
         public async Task<TokenRecord> GenerateJwtToken(ApplicationUser user, bool rememberMe)
         {
+            // Get user roles
+            var userRoles = await _userManager.GetRolesAsync(user);
+            
             var claims = new List<Claim>
             {
                 new Claim(JwtRegisteredClaimNames.Sub, user.Id),
@@ -90,6 +96,12 @@ namespace Appointment_System.Services
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
                 new Claim(ClaimTypes.NameIdentifier, user.Id)
             };
+            
+            // Add role claims
+            foreach (var role in userRoles)
+            {
+                claims.Add(new Claim(ClaimTypes.Role, role));
+            }
 
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);

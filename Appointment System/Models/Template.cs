@@ -12,7 +12,7 @@ namespace Appointment_System.Models
     public class Template
     {
         [Key]
-        public int Id { get; set; }
+        public int Id { get; set; } = 0;
 
         [Required]
         [StringLength(100)]
@@ -57,15 +57,7 @@ namespace Appointment_System.Models
         /// </summary>
         public DateTime? UpdatedAt { get; set; }
 
-        /// <summary>
-        /// Maximum number of days in advance that appointments can be booked
-        /// </summary>
-        public int BookingWindowDays { get; set; } = 30;
 
-        /// <summary>
-        /// Minimum notice period required for booking (in hours)
-        /// </summary>
-        public int MinimumNoticeHours { get; set; } = 24;
     }
 }
  
