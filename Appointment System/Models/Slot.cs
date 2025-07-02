@@ -12,33 +12,26 @@ namespace Appointment_System.Models
         [Key]
         public int Id { get; set; }
 
-        /// <summary>
-        /// The ID of the day this slot belongs to
-        /// </summary>
-        public int DayId { get; set; }
-        
-        /// <summary>
-        /// The ID of the segment this slot belongs to
-        /// </summary>
-        public int SegmentId { get; set; }
-        
-        [ForeignKey("SegmentId")]
-        public Segment Segment { get; set; }
 
-        /// <summary>
-        /// Duration of the slot
-        /// </summary>
-        public TimeSpan Duration { get; set; }
+        [Required]
+        public int ArrangementId { get; set; }
+
+
+        [Required]
+        public DateOnly Date { get; set; }
         
+
         /// <summary>
         /// Start time of the slot
         /// </summary>
-        public DateTime StartTime { get; set; }
+        [Required]
+        public TimeOnly StartTime { get; set; }
         
         /// <summary>
         /// End time of the slot
         /// </summary>
-        public DateTime EndTime { get; set; }
+        [Required]
+        public TimeOnly EndTime { get; set; }
         
         /// <summary>
         /// Maximum number of concurrent appointments allowed in this slot
@@ -55,9 +48,5 @@ namespace Appointment_System.Models
         /// </summary>
         public bool IsAvailable { get; set; } = true;
         
-        /// <summary>
-        /// Navigation property to the appointment booked for this slot
-        /// </summary>
-        public virtual Appointment? Appointment { get; set; }
     }
 }

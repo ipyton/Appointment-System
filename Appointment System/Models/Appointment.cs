@@ -10,17 +10,16 @@ namespace Appointment_System.Models
         [Key]
         public int Id { get; set; }
 
+        [ForeignKey("UserId")]
         [Required]
         public string UserId { get; set; }
 
-        [ForeignKey("UserId")]
-        public ApplicationUser User { get; set; }
 
         [Required]
         public int ServiceId { get; set; }
 
         [ForeignKey("ServiceId")]
-        public Service Service { get; set; }
+        public int ServiceId { get; set; }
          
         [Required]
         public int TemplateId {get; set;}
@@ -43,11 +42,9 @@ namespace Appointment_System.Models
 
         public DateTime? UpdatedAt { get; set; }
 
-        [Required]
+
         public int BillId { get; set; }
 
-        [ForeignKey("BillId")]
-        public Bill Bill { get; set; }
         
         // Add missing properties for time management
         public DateTime AppointmentDate { get; set; }

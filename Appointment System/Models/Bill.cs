@@ -12,8 +12,6 @@ namespace Appointment_System.Models
         [Required]
         public int AppointmentId { get; set; }
 
-        [ForeignKey("AppointmentId")]
-        public Appointment Appointment { get; set; }
 
         [Required]
         [Column(TypeName = "decimal(18,2)")]

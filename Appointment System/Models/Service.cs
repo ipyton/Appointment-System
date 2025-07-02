@@ -23,8 +23,6 @@ namespace Appointment_System.Models
         [Column(TypeName = "decimal(18,2)")]
         public decimal Price { get; set; }
 
-        [Required]
-        public int DurationMinutes { get; set; }
 
         [Required]
         public string ProviderId { get; set; }
@@ -40,7 +38,7 @@ namespace Appointment_System.Models
         
         public bool allowMultipleBookings { get; set; } = false;
         
-        public virtual ICollection<Segment> Segments { get; set; }
+        //public virtual ICollection<Segment> Segments { get; set; }
         
         public virtual ICollection<Arrangement> Arrangements { get; set; }
         

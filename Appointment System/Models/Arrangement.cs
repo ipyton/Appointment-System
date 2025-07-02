@@ -5,17 +5,20 @@ namespace Appointment_System.Models
 {
     public class Arrangement
     {
+        [Key]
         public int Id { get; set; }
-        public int RepeatTimes { get; set; }
-        public int RepeatInterval { get; set; } 
-        public int ServiceId { get; set; }
-        public int TemplateId { get; set; }
-        public DateTime StartDateTime { get; set; }
-        
+
+        [Required]
         [ForeignKey("ServiceId")]
-        public Service Service { get; set; }
+        public int ServiceId { get; set; }
+
+        [Required]
+        public int Index { get; set; }
+
+        [Required]
+        public DateOnly StartDate { get; set; }
         
         [ForeignKey("TemplateId")]
-        public Template Template { get; set; }
+        public int TemplateId { get; set; }
     }
 }
