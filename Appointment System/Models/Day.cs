@@ -24,6 +24,7 @@ namespace Appointment_System.Models
         /// </summary>
         public int TemplateId { get; set; }
         
+        
         /// <summary>
         /// Whether this day is available for appointments
         /// </summary>
@@ -33,6 +34,6 @@ namespace Appointment_System.Models
         /// <summary>
         /// Collection of time segments for this day
         /// </summary>
-        public ICollection<Segment> Segments { get; set; }
+        public virtual ICollection<Segment> Segments { get; set; }
     }
 }

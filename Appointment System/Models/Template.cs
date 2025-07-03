@@ -11,6 +11,11 @@ namespace Appointment_System.Models
     /// </summary>
     public class Template
     {
+        public Template()
+        {
+            Days = new HashSet<Day>();
+        }
+        
         [Key]
         public int Id { get; set; } = 0;
 
@@ -40,7 +45,7 @@ namespace Appointment_System.Models
         /// <summary>
         /// Collection of days configured in this template
         /// </summary>
-        public ICollection<Day> Days { get; set; }
+        public virtual ICollection<Day> Days { get; set; }
 
         /// <summary>
         /// Indicates if the template is active and can be used for scheduling
