@@ -24,7 +24,7 @@ namespace Appointment_System.Models
         /// </summary>
         public int DayId { get; set; }
         
-        
+
         /// <summary>
         /// Duration for a single appointment slot within this segment
         /// </summary>
@@ -40,15 +40,8 @@ namespace Appointment_System.Models
         /// </summary>
         public TimeOnly EndTime { get; set; }
         
-        /// <summary>
-        /// Maximum number of concurrent appointments allowed in this segment
-        /// </summary>
-        public int MaxConcurrentAppointments { get; set; } = 1;
         
-        /// <summary>
-        /// Whether this segment is available for booking
-        /// </summary>
-        public bool IsAvailable { get; set; } = true;
+
         
     }
 } 
