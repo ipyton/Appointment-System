@@ -37,7 +37,7 @@ namespace Appointment_System.Data
 
             // Service to Arrangement relationship
             builder.Entity<Service>()
-                .HasMany<Arrangement>()
+                .HasMany(s => s.Arrangements)
                 .WithOne()
                 .HasForeignKey(a => a.ServiceId)
                 .OnDelete(DeleteBehavior.NoAction);
@@ -95,12 +95,6 @@ namespace Appointment_System.Data
                 .WithMany()
                 .HasForeignKey(m => m.SenderId)
                 .OnDelete(DeleteBehavior.Restrict);
-
-            builder.Entity<Service>()
-                .HasMany<Arrangement>()
-                .WithOne()
-                .HasForeignKey(a => a.ServiceId)
-                .OnDelete(DeleteBehavior.NoAction);
 
             builder.Entity<Slot>()
                 .HasOne<Service>()

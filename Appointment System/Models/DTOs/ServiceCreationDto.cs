@@ -16,7 +16,7 @@ namespace Appointment_System.Models.DTOs
         
         public int Duration { get; set; }
         
-        public string EventImage { get; set; }
+        public string? EventImage { get; set; }
         
         public string StartDate { get; set; }
         
