@@ -34,14 +34,13 @@ namespace Appointment_System.Controllers
             _searchIndexingHandler = searchIndexingHandler;
         }
 
-        // GET: api/Services
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Service>>> GetServices()
         {
             return await _context.Services.Where(s => s.IsActive).ToListAsync();
         }
 
-        // GET: api/Services/5
+
         [HttpGet("{id}")]
         public async Task<ActionResult<Service>> GetService(int id)
         {
@@ -55,11 +54,20 @@ namespace Appointment_System.Controllers
             return service;
         }
 
-        // GET: api/Services/provider/{providerId}
-        [HttpGet("provider/{providerId}")]
-        public async Task<ActionResult<IEnumerable<Service>>> GetProviderServices(string providerId)
+
+        [HttpGet("get-all")]
+        [Authorize(Roles = "ServiceProvider")]
+        public async Task<ActionResult<IEnumerable<Service>>> GetProviderServices()
         {
-            return await _context.Services.Where(s => s.ProviderId == providerId).ToListAsync();
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userId))
+            {
+                return Unauthorized("User not authenticated properly");
+            }
+
+            return await _context.Services
+                .Where(s => s.ProviderId == userId).Include(s => s.Arrangements)
+                .ToListAsync();
         }
 
         [HttpPost("create")]
@@ -71,7 +79,6 @@ namespace Appointment_System.Controllers
                 return BadRequest(ModelState);
             }
 
-            // Get current user's ID (provider ID)
             var providerId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (string.IsNullOrEmpty(providerId))
             {
