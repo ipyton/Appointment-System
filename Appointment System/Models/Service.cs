@@ -16,7 +16,7 @@ namespace Appointment_System.Models
 
         public bool enabled { get; set; } = true;
 
-        [StringLength(500)]
+        [StringLength(2000)]
         public string Description { get; set; }
 
         [Required]

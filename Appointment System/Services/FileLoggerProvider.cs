@@ -13,6 +13,7 @@ namespace Appointment_System.Services
         public int MaxRollingFiles { get; set; } = 10;
     }
 
+    // Logger provider implementation
     [ProviderAlias("File")]
     public class FileLoggerProvider : ILoggerProvider
     {
@@ -31,7 +32,7 @@ namespace Appointment_System.Services
             _maxRollingFiles = _config.MaxRollingFiles;
 
             // Ensure log directory exists
-            var logDirectory = Path.GetDirectoryName(_path);
+            var logDirectory = System.IO.Path.GetDirectoryName(_path);
             if (!string.IsNullOrEmpty(logDirectory) && !Directory.Exists(logDirectory))
             {
                 Directory.CreateDirectory(logDirectory);

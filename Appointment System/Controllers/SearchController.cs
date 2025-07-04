@@ -10,7 +10,7 @@ using Appointment_System.Services;
 namespace Appointment_System.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("[controller]")]
     public class SearchController : ControllerBase
     {
         private readonly AzureSearchService _searchService;
@@ -41,7 +41,6 @@ namespace Appointment_System.Controllers
                 {
                     filterParts.Add($"type eq '{type}'");
                 }
-                
                 if (isServiceProvider.HasValue)
                 {
                     filterParts.Add($"isServiceProvider eq {isServiceProvider.Value.ToString().ToLower()}");
@@ -104,13 +103,18 @@ namespace Appointment_System.Controllers
         /// </summary>
         [HttpGet("suggest")]
         public async Task<IActionResult> Suggest(
-            [FromQuery] string query,
+            [FromQuery] string q,
             [FromQuery] bool fuzzy = true,
             [FromQuery] int top = 5)
         {
             try
             {
-                var suggestResults = await _searchService.SuggestAsync(query, "sg", fuzzy, top);
+                if (string.IsNullOrWhiteSpace(q))
+                {
+                    return BadRequest(new { Error = "Query parameter is required" });
+                }
+                
+                var suggestResults = await _searchService.SuggestAsync(q, "sg", fuzzy, top);
                 
                 var suggestions = suggestResults.Results.Select(result => 
                 {
@@ -120,7 +124,8 @@ namespace Appointment_System.Controllers
                         Text = result.Text,
                         Id = doc.TryGetValue("id", out var id) ? id : null,
                         Type = doc.TryGetValue("type", out var type) ? type : null,
-                        Name = doc.TryGetValue("name", out var name) ? name : null
+                        Name = doc.TryGetValue("name", out var name) ? name : null,
+                        Description = doc.TryGetValue("description", out var description) ? description : null
                     };
                 });
                 

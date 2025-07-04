@@ -1,0 +1,116 @@
+# GraphQL Schema for Appointment System
+
+type Query {
+  # Get a list of all users
+  users: [User!]!
+  
+  # Get a user by ID
+  userById(id: ID!): User
+  
+  # Get a list of available services
+  services: [Service!]!
+  
+  # Get a service by ID
+  serviceById(id: ID!): Service
+  
+  # Get a list of appointments
+  appointments: [Appointment!]!
+  
+  # Get an appointment by ID
+  appointmentById(id: ID!): Appointment
+}
+
+type Mutation {
+  # Add a new service
+  addService(
+    name: String!
+    description: String
+    price: Float!
+    allowMultipleBookings: Boolean
+  ): Service
+  
+  # Update an existing service
+  updateService(
+    id: ID!
+    name: String!
+    description: String
+    price: Float!
+    allowMultipleBookings: Boolean!
+  ): Service
+  
+  # Create a new appointment
+  createAppointment(
+    serviceId: ID!
+    providerId: ID!
+    slotId: ID!
+    appointmentDate: DateTime!
+    startTime: DateTime!
+    endTime: DateTime!
+    notes: String
+  ): Appointment
+  
+  # Update the status of an appointment
+  updateAppointmentStatus(
+    appointmentId: ID!
+    status: AppointmentStatus!
+  ): Appointment
+}
+
+# Represents a user in the system
+type User {
+  id: ID!
+  fullName: String!
+  email: String!
+  userName: String!
+  address: String
+  dateOfBirth: DateTime
+  isServiceProvider: Boolean!
+  profilePictureUrl: String
+  businessName: String
+  businessDescription: String
+  createdAt: DateTime!
+  updatedAt: DateTime
+}
+
+# Represents a service that can be booked
+type Service {
+  id: ID!
+  name: String!
+  description: String
+  price: Float!
+  providerId: ID!
+  isActive: Boolean!
+  enabled: Boolean!
+  createdAt: DateTime!
+  updatedAt: DateTime
+  allowMultipleBookings: Boolean!
+}
+
+# Represents an appointment in the system
+type Appointment {
+  id: ID!
+  userId: ID!
+  serviceId: ID!
+  providerId: ID!
+  slotId: ID!
+  notes: String
+  status: AppointmentStatus!
+  createdAt: DateTime!
+  updatedAt: DateTime
+  billId: ID
+  appointmentDate: DateTime!
+  startTime: DateTime!
+  endTime: DateTime!
+}
+
+# Status values for appointments
+enum AppointmentStatus {
+  PENDING
+  CONFIRMED
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+}
+
+# Custom scalar for representing dates and times
+scalar DateTime 

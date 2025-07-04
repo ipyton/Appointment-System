@@ -214,6 +214,12 @@ namespace Appointment_System.Services
                 Size = top
             };
 
+            // Add fields to be returned in the results
+            options.Select.Add("id");
+            options.Select.Add("type");
+            options.Select.Add("name");
+            options.Select.Add("description");
+
             return await _searchClient.SuggestAsync<Dictionary<string, object>>(searchText, suggesterName, options);
         }
     }
