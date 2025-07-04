@@ -14,11 +14,11 @@ namespace Appointment_System.Models
 
 
         [Required]
-        public int ServiceId { get; set; }
+        public int ServiceId { get; set;}
 
 
         [Required]
-        public DateOnly Date { get; set; }
+        public DateOnly Date { get; set;}
         
 
         /// <summary>
