@@ -86,7 +86,7 @@ namespace Appointment_System.Controllers
 
          [HttpGet("getNames")]
         [Authorize(Roles = "ServiceProvider")]
-        public async Task<ActionResult<IEnumerable<TemplateDTO>>> GetMyTemplates()
+        public async Task<ActionResult<IEnumerable<TemplateDTO>>> GetMyTemplateNames()
         {
             var userId = User.FindFirst("sub")?.Value ?? 
                          User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? 
@@ -110,36 +110,26 @@ namespace Appointment_System.Controllers
             return Ok(templates.Select(t => t.ToTemplateDTO()));
         }
 
-        [HttpGet("getNames")]
-        [Authorize(Roles = "ServiceProvider")]
-        public async Task<ActionResult<TemplateDTO>> GetTemplateById()
-        {
-            string userId = User.FindFirst("sub")?.Value ?? User.Identity?.Name;
-            var templates = await _templateService.GetTemplatesByUserId(userId);
+        // [HttpGet("get/{id}")]
+        // [Authorize(Roles = "ServiceProvider")]
+        // public async Task<ActionResult<Template>> GetTemplate(int id)
+        // {
+        //     var template = await _templateService.GetTemplateWithDetailsAsync(id).Include(t => t.Days).Include(t => t.Days.Select(d => d.Segments));
 
-            return Ok(new {names = templates.Select(t => t.Name)});
-        }
+        //     if (template == null)
+        //     {
+        //         return NotFound($"Template with ID {id} not found");
+        //     }
 
-        [HttpGet("get/{id}")]
-        [Authorize(Roles = "ServiceProvider")]
-        public async Task<ActionResult<Template>> GetTemplate(int id)
-        {
-            var template = await _templateService.GetTemplateWithDetailsAsync(id).Include(t => t.Days).Include(t => t.Days.Select(d => d.Segments));
+        //     // Check if the user has access to this template
+        //     var currentUserId = User.FindFirst("sub")?.Value ?? User.Identity?.Name;
+        //     if (template.ProviderId != currentUserId)
+        //     {
+        //         return Forbid();
+        //     }
 
-            if (template == null)
-            {
-                return NotFound($"Template with ID {id} not found");
-            }
-
-            // Check if the user has access to this template
-            var currentUserId = User.FindFirst("sub")?.Value ?? User.Identity?.Name;
-            if (template.ProviderId != currentUserId)
-            {
-                return Forbid();
-            }
-
-            return Ok(template.ToTemplateDTO());
-        }
+        //     return Ok(template.ToTemplateDTO());
+        // }
 
 
         // PUT: Template/upsert
