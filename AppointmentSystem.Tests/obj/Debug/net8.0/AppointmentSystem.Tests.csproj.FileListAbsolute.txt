@@ -1,0 +1,7 @@
+/Users/noah/Appointment System/AppointmentSystem.Tests/bin/Debug/net8.0/CoverletSourceRootsMapping_AppointmentSystem.Tests
+/Users/noah/Appointment System/AppointmentSystem.Tests/obj/Debug/net8.0/AppointmentSystem.Tests.csproj.AssemblyReference.cache
+/Users/noah/Appointment System/AppointmentSystem.Tests/obj/Debug/net8.0/AppointmentSystem.Tests.GeneratedMSBuildEditorConfig.editorconfig
+/Users/noah/Appointment System/AppointmentSystem.Tests/obj/Debug/net8.0/AppointmentSystem.Tests.AssemblyInfoInputs.cache
+/Users/noah/Appointment System/AppointmentSystem.Tests/obj/Debug/net8.0/AppointmentSystem.Tests.AssemblyInfo.cs
+/Users/noah/Appointment System/AppointmentSystem.Tests/obj/Debug/net8.0/AppointmentSystem.Tests.csproj.CoreCompileInputs.cache
+/Users/noah/Appointment System/AppointmentSystem.Tests/obj/Debug/net8.0/AppointmentSystem.Tests.sourcelink.json

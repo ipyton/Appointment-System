@@ -10,6 +10,10 @@ using TokenService = Appointment_System.Services.TokenService;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using Appointment_System.GraphQL.Types;
+using Appointment_System.GraphQL.Queries;
+using Appointment_System.GraphQL.Mutations;
+using Appointment_System.GraphQL.Authorization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -51,6 +55,7 @@ builder.Services.AddScoped<SearchIndexingEventHandler>();
 builder.Services.AddScoped<AppointmentClientService>();
 builder.Services.AddScoped<AppointmentProviderService>();
 builder.Services.AddScoped<TemplateService>();
+builder.Services.AddHttpContextAccessor();
 
 // Register background services
 builder.Services.AddHostedService<SearchIndexingService>();
@@ -116,6 +121,24 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
+// Add a pooled DbContext factory for GraphQL
+builder.Services.AddPooledDbContextFactory<ApplicationDbContext>(options => 
+    options.UseSqlServer(connectionString));
+
+// Add GraphQL services
+builder.Services
+    .AddGraphQLServer()
+    .AddAuthorization()
+    .AddProjections()
+    .AddFiltering()
+    .AddSorting()
+    .AddQueryType<Query>()
+    .AddMutationType<Mutation>()
+    .AddType<UserType>()
+    .AddType<AppointmentType>()
+    .AddType<ServiceType>()
+    .AddAuthorizationHandler<AuthorizationDirectiveHandler>();
+
 // Add CORS services
 builder.Services.AddCors(options =>
 {
@@ -176,6 +199,9 @@ app.UseMiddleware<TokenValidationMiddleware>();
 // 添加认证和授权中间件
 app.UseAuthentication();
 app.UseAuthorization();
+
+// Map the GraphQL endpoint
+app.MapGraphQL();
 
 app.MapControllers();
 // Map the SignalR hub
