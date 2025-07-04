@@ -27,7 +27,7 @@ namespace Appointment_System.Services
         {
             return await _context.Services
                 .Where(s => s.IsActive)
-                .Include(s => s.Provider)
+                .Include(s => s.Arrangements)
                 .ToListAsync();
         }
 
@@ -37,7 +37,6 @@ namespace Appointment_System.Services
         public async Task<Service> GetServiceByIdAsync(int serviceId)
         {
             return await _context.Services
-                .Include(s => s.Provider)
                 .Include(s => s.Arrangements)
                 .FirstOrDefaultAsync(s => s.Id == serviceId && s.IsActive);
         }

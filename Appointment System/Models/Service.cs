@@ -25,10 +25,8 @@ namespace Appointment_System.Models
 
 
         [Required]
-        public string ProviderId { get; set; }
-
         [ForeignKey("ProviderId")]
-        public ApplicationUser Provider { get; set; }
+        public string ProviderId { get; set; }
 
         public bool IsActive { get; set; } = true;
 
