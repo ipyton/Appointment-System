@@ -100,6 +100,14 @@ namespace Appointment_System.Controllers
                     _context.Arrangements.AddRange(arrangements);
                     await _context.SaveChangesAsync();
                 }
+                
+                // Generate and save slots
+                var slots = await ServiceMapper.GenerateSlotsFromService(service.Id, dto.Duration, _context);
+                if (slots.Any())
+                {
+                    _context.Slots.AddRange(slots);
+                    await _context.SaveChangesAsync();
+                }
 
                 await transaction.CommitAsync();
 
@@ -216,6 +224,50 @@ namespace Appointment_System.Controllers
             await _searchIndexingHandler.ServiceDeletedAsync(id);
 
             return NoContent();
+        }
+
+        /// <summary>
+        /// Gets all dates in a specific month that have slots and the count of slots per day
+        /// </summary>
+        /// <param name="year">The year</param>
+        /// <param name="month">The month (1-12)</param>
+        /// <param name="serviceId">Optional service ID to filter slots</param>
+        /// <returns>Dictionary of dates and their slot counts</returns>
+        [HttpGet("slots-by-month")]
+        public async Task<ActionResult<Dictionary<int, int>>> GetSlotsByMonth(int year, int month, int? serviceId = null)
+        {
+            if (month < 1 || month > 12)
+            {
+                return BadRequest("Month must be between 1 and 12");
+            }
+
+            try
+            {
+                // Build query to get slots for the specified month
+                var query = _context.Slots.AsQueryable();
+                
+                // Add service filter if provided
+                if (serviceId.HasValue)
+                {
+                    query = query.Where(s => s.ServiceId == serviceId.Value);
+                }
+                
+                // Filter by year and month
+                query = query.Where(s => s.Date.Year == year && s.Date.Month == month);
+
+                // Group by day and count slots
+                var result = await query
+                    .GroupBy(s => s.Date.Day)
+                    .Select(g => new { Day = g.Key, Count = g.Count() })
+                    .ToDictionaryAsync(x => x.Day, x => x.Count);
+
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving slots by month");
+                return StatusCode(500, $"An error occurred: {ex.Message}");
+            }
         }
 
         private bool ServiceExists(int id)
