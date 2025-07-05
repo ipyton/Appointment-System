@@ -70,14 +70,6 @@ namespace Appointment_System.Models
         public AppointmentStatus Status { get; set; }
     }
 
-    public class BookAppointmentDto
-    {
-        [Required]
-        public int ServiceId { get; set; }
-
-        [Required]
-        public DateTime StartTime { get; set; }
-    }
 
     public class SendMessageDto
     {

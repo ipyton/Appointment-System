@@ -156,7 +156,6 @@ namespace Appointment_System.Services
         public async Task<bool> CancelAppointmentAsync(int appointmentId, string userId)
         {
             var appointment = await _context.Appointments
-                .Include(a => a.Bills)
                 .FirstOrDefaultAsync(a => a.Id == appointmentId && a.UserId == userId);
 
             if (appointment == null)
@@ -169,8 +168,11 @@ namespace Appointment_System.Services
             appointment.Status = AppointmentStatus.Cancelled;
             appointment.UpdatedAt = DateTime.UtcNow;
 
-            // Update any associated bills
-            foreach (var bill in appointment.Bills)
+            // Update associated bill
+            var bill = await _context.Bills
+                .FirstOrDefaultAsync(b => b.AppointmentId == appointmentId);
+                
+            if (bill != null)
             {
                 bill.Status = BillStatus.Cancelled;
                 bill.UpdatedAt = DateTime.UtcNow;

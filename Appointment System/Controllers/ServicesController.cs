@@ -345,6 +345,7 @@ namespace Appointment_System.Controllers
         /// <param name="serviceId">Optional service ID to filter slots</param>
         /// <returns>Dictionary of dates and their slot counts</returns>
         [HttpGet("slots-by-month")]
+        [Authorize(Roles = "ServiceProvider,Admin,User")]
         public async Task<ActionResult<Dictionary<int, int>>> GetSlotsByMonth(int year, int month, int? serviceId = null)
         {
             if (month < 1 || month > 12)
@@ -388,6 +389,7 @@ namespace Appointment_System.Controllers
         /// <param name="serviceId">Optional service ID to filter slots</param>
         /// <returns>List of slots for the specified date</returns>
         [HttpGet("slots-by-date")]
+        [Authorize(Roles = "ServiceProvider,Admin,User")]
         public async Task<ActionResult<IEnumerable<Slot>>> GetSlotsByDate(string date, int? serviceId = null)
         {
             if (!DateOnly.TryParse(date, out DateOnly parsedDate))
@@ -414,7 +416,7 @@ namespace Appointment_System.Controllers
                 
                 if (!slots.Any())
                 {
-                    return NotFound($"No slots found for date {date}");
+                    return Ok(new List<Slot>());
                 }
 
                 return Ok(slots);
