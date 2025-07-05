@@ -165,6 +165,9 @@ namespace Appointment_System.Controllers
                     await _context.SaveChangesAsync();
                 }
 
+                // Index the new service in Azure Search
+                await _searchIndexingHandler.ServiceCreatedOrUpdatedAsync(service);
+
                 await transaction.CommitAsync();
 
                 // Return the created service with its arrangements
@@ -180,27 +183,7 @@ namespace Appointment_System.Controllers
             }
         }
 
-        // POST: api/Services
-        [HttpPost]
-        [Authorize(Roles = "ServiceProvider,Admin")]
-        public async Task<ActionResult<Service>> CreateService(Service service)
-        {
-            // Ensure the current user is the provider or an admin
-            var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
-            if (service.ProviderId != userId && !User.IsInRole("Admin"))
-            {
-                return Forbid();
-            }
 
-            service.CreatedAt = DateTime.UtcNow;
-            _context.Services.Add(service);
-            await _context.SaveChangesAsync();
-
-            // Index the new service in Azure Search
-            await _searchIndexingHandler.ServiceCreatedOrUpdatedAsync(service);
-
-            return CreatedAtAction(nameof(GetService), new { id = service.Id }, service);
-        }
 
         // PUT: api/Services/5
         [HttpPut("{id}")]

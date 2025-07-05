@@ -20,83 +20,79 @@ namespace Appointment_System.Controllers
             _searchService = searchService;
         }
 
-        /// <summary>
-        /// Search for users and services
-        /// </summary>
-        [HttpGet]
-        public async Task<IActionResult> Search(
-            [FromQuery] string query = "",
-            [FromQuery] string type = null,
-            [FromQuery] bool? isServiceProvider = null,
-            [FromQuery] bool? isActive = null,
-            [FromQuery] int skip = 0,
-            [FromQuery] int top = 20)
+// In your SearchController.cs, modify the Search method to include scores:
+
+[HttpGet]
+public async Task<IActionResult> Search(
+    [FromQuery] string q = "",
+    [FromQuery] string type = null,
+    [FromQuery] bool? isActive = null,
+    [FromQuery] int skip = 0,
+    [FromQuery] int top = 10)
+{
+    try
+    {
+        // Build filter
+        var filterParts = new List<string>();
+        
+        if (!string.IsNullOrEmpty(type))
         {
-            try
-            {
-                // Build filter
-                var filterParts = new List<string>();
-                
-                if (!string.IsNullOrEmpty(type))
-                {
-                    filterParts.Add($"type eq '{type}'");
-                }
-                if (isServiceProvider.HasValue)
-                {
-                    filterParts.Add($"isServiceProvider eq {isServiceProvider.Value.ToString().ToLower()}");
-                }
-                
-                if (isActive.HasValue)
-                {
-                    filterParts.Add($"isActive eq {isActive.Value.ToString().ToLower()}");
-                }
-                
-                string filter = filterParts.Count > 0 ? string.Join(" and ", filterParts) : null;
-                
-                // Perform search
-                var searchResults = await _searchService.SearchAsync(
-                    query, 
-                    filter, 
-                    skip, 
-                    top,
-                    "id", "type", "name", "description", "isActive", "createdAt", "email", 
-                    "isServiceProvider", "businessName", "price", "durationMinutes", "tags");
-                
-                // Format results
-                var results = new
-                {
-                    TotalCount = searchResults.TotalCount,
-                    Results = searchResults.GetResults().Select(result => 
-                    {
-                        var doc = result.Document;
-                        return new
-                        {
-                            Id = doc.TryGetValue("id", out var id) ? id : null,
-                            Type = doc.TryGetValue("type", out var type) ? type : null,
-                            Name = doc.TryGetValue("name", out var name) ? name : null,
-                            Description = doc.TryGetValue("description", out var description) ? description : null,
-                            IsActive = doc.TryGetValue("isActive", out var isActive) ? isActive : null,
-                            CreatedAt = doc.TryGetValue("createdAt", out var createdAt) ? createdAt : null,
-                            Email = doc.TryGetValue("email", out var email) ? email : null,
-                            IsServiceProvider = doc.TryGetValue("isServiceProvider", out var isServiceProvider) ? isServiceProvider : null,
-                            BusinessName = doc.TryGetValue("businessName", out var businessName) ? businessName : null,
-                            Price = doc.TryGetValue("price", out var price) ? price : null,
-                            DurationMinutes = doc.TryGetValue("durationMinutes", out var durationMinutes) ? durationMinutes : null,
-                            Tags = doc.TryGetValue("tags", out var tags) ? tags : null
-                        };
-                    }),
-                    Facets = searchResults.Facets?.ToDictionary(
-                        facet => facet.Key,
-                        facet => facet.Value.Select(f => new { Value = f.Value, Count = f.Count }))
-                };
-                
-                return Ok(results);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { Error = "Search failed", Message = ex.Message });
-            }
+            filterParts.Add($"type eq '{type}'");
         }
+        
+        if (isActive.HasValue)
+        {
+            filterParts.Add($"isActive eq {isActive.Value.ToString().ToLower()}");
+        }
+        
+        string filter = filterParts.Count > 0 ? string.Join(" and ", filterParts) : null;
+        
+        // Perform search
+        var searchResults = await _searchService.SearchAsync(
+            q, 
+            filter, 
+            skip, 
+            top,
+            "id", "type", "name", "description", "isActive", "createdAt", "email", 
+            "businessName", "price", "durationMinutes", "tags");
+            
+        // Format results WITH SCORES for debugging
+        var results = new
+        {
+            TotalCount = searchResults.TotalCount,
+            Results = searchResults.GetResults().Select(result => 
+            {
+                var doc = result.Document;
+                return new
+                {
+                    Id = doc.TryGetValue("id", out var id) ? id : null,
+                    Type = doc.TryGetValue("type", out var type) ? type : null,
+                    Name = doc.TryGetValue("name", out var name) ? name : null,
+                    Description = doc.TryGetValue("description", out var description) ? description : null,
+                    IsActive = doc.TryGetValue("isActive", out var isActive) ? isActive : null,
+                    CreatedAt = doc.TryGetValue("createdAt", out var createdAt) ? createdAt : null,
+                    Email = doc.TryGetValue("email", out var email) ? email : null,
+                    IsServiceProvider = doc.TryGetValue("isServiceProvider", out var isServiceProvider) ? isServiceProvider : null,
+                    BusinessName = doc.TryGetValue("businessName", out var businessName) ? businessName : null,
+                    Price = doc.TryGetValue("price", out var price) ? price : null,
+                    DurationMinutes = doc.TryGetValue("durationMinutes", out var durationMinutes) ? durationMinutes : null,
+                    Tags = doc.TryGetValue("tags", out var tags) ? tags : null,
+                    // ADD THIS LINE TO SEE THE SEARCH SCORE
+                    SearchScore = result.Score
+                };
+            }),
+            Facets = searchResults.Facets?.ToDictionary(
+                facet => facet.Key,
+                facet => facet.Value.Select(f => new { Value = f.Value, Count = f.Count }))
+        };
+        
+        return Ok(results);
+    }
+    catch (Exception ex)
+    {
+        return StatusCode(500, new { Error = "Search failed", Message = ex.Message });
+    }
+}
 
         /// <summary>
         /// Get autocomplete suggestions
