@@ -35,39 +35,95 @@ namespace Appointment_System.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Service>>> GetServices()
+        public async Task<ActionResult<IEnumerable<object>>> GetServices()
         {
-            return await _context.Services.Where(s => s.IsActive).ToListAsync();
+            var services = await _context.Services
+                .Where(s => s.IsActive)
+                .Join(
+                    _context.Users,
+                    service => service.ProviderId,
+                    user => user.Id,
+                    (service, user) => new
+                    {
+                        Service = service,
+                        Provider = new
+                        {
+                            Id = user.Id,
+                            FullName = user.FullName,
+                            BusinessName = user.BusinessName,
+                            Email = user.Email
+                        }
+                    })
+                .ToListAsync();
+            
+            return Ok(services);
         }
 
-
         [HttpGet("{id}")]
-        public async Task<ActionResult<Service>> GetService(int id)
+        public async Task<ActionResult<object>> GetService(int id)
         {
-            var service = await _context.Services.FirstOrDefaultAsync(s => s.Id == id);
+            var serviceWithProvider = await _context.Services
+                .Where(s => s.Id == id)
+                .Join(
+                    _context.Users,
+                    service => service.ProviderId,
+                    user => user.Id,
+                    (service, user) => new
+                    {
+                        Service = service,
+                        Provider = new
+                        {
+                            Id = user.Id,
+                            FullName = user.FullName,
+                            BusinessName = user.BusinessName,
+                            Email = user.Email,
+                            PhoneNumber = user.PhoneNumber
+                        }
+                    })
+                .FirstOrDefaultAsync();
 
-            if (service == null)
+            if (serviceWithProvider == null)
             {
                 return NotFound();
             }
 
-            return service;
+            return serviceWithProvider;
         }
-
 
         [HttpGet("get-all")]
         [Authorize(Roles = "ServiceProvider")]
-        public async Task<ActionResult<IEnumerable<Service>>> GetProviderServices()
+        public async Task<ActionResult<IEnumerable<object>>> GetProviderServices()
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (string.IsNullOrEmpty(userId))
             {
                 return Unauthorized("User not authenticated properly");
             }
-
-            return await _context.Services
-                .Where(s => s.ProviderId == userId).Include(s => s.Arrangements)
+            
+            // First get provider information
+            var provider = await _context.Users
+                .Where(u => u.Id == userId)
+                .Select(u => new {
+                    Id = u.Id,
+                    FullName = u.FullName,
+                    BusinessName = u.BusinessName,
+                    Email = u.Email
+                })
+                .FirstOrDefaultAsync();
+                
+            // Then get services with arrangements
+            var services = await _context.Services
+                .Where(s => s.ProviderId == userId)
+                .Include(s => s.Arrangements)
                 .ToListAsync();
+
+            // Combine the data
+            var result = services.Select(service => new {
+                Service = service,
+                Provider = provider
+            }).ToList();
+
+            return Ok(result);
         }
 
         [HttpPost("create")]
@@ -268,6 +324,79 @@ namespace Appointment_System.Controllers
                 _logger.LogError(ex, "Error retrieving slots by month");
                 return StatusCode(500, $"An error occurred: {ex.Message}");
             }
+        }
+
+        /// <summary>
+        /// Gets all slots for a specific date
+        /// </summary>
+        /// <param name="date">The date in yyyy-MM-dd format</param>
+        /// <param name="serviceId">Optional service ID to filter slots</param>
+        /// <returns>List of slots for the specified date</returns>
+        [HttpGet("slots-by-date")]
+        public async Task<ActionResult<IEnumerable<Slot>>> GetSlotsByDate(string date, int? serviceId = null)
+        {
+            if (!DateOnly.TryParse(date, out DateOnly parsedDate))
+            {
+                return BadRequest("Invalid date format. Please use yyyy-MM-dd format.");
+            }
+
+            try
+            {
+                // Build query to get slots for the specified date
+                var query = _context.Slots.AsQueryable();
+                
+                // Add service filter if provided
+                if (serviceId.HasValue)
+                {
+                    query = query.Where(s => s.ServiceId == serviceId.Value);
+                }
+                
+                // Filter by date
+                query = query.Where(s => s.Date == parsedDate);
+
+                // Order by start time
+                var slots = await query.OrderBy(s => s.StartTime).ToListAsync();
+                
+                if (!slots.Any())
+                {
+                    return NotFound($"No slots found for date {date}");
+                }
+
+                return Ok(slots);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving slots by date");
+                return StatusCode(500, $"An error occurred: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Gets all services regardless of active status, with their provider information
+        /// </summary>
+        /// <returns>All services with provider information</returns>
+        [HttpGet("all-services")]
+        public async Task<ActionResult<IEnumerable<object>>> GetAllServices()
+        {
+            var services = await _context.Services
+                .Join(
+                    _context.Users,
+                    service => service.ProviderId,
+                    user => user.Id,
+                    (service, user) => new
+                    {
+                        Service = service,
+                        Provider = new
+                        {
+                            Id = user.Id,
+                            FullName = user.FullName,
+                            BusinessName = user.BusinessName,
+                            Email = user.Email
+                        }
+                    })
+                .ToListAsync();
+            
+            return Ok(services);
         }
 
         private bool ServiceExists(int id)

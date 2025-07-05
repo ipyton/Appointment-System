@@ -44,6 +44,7 @@ builder.Logging.AddFile(options =>
 
 // 配置数据库
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+// Only use AddDbContext, remove the AddPooledDbContextFactory to avoid conflicts
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(connectionString));
 
@@ -121,10 +122,6 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
-// Add a pooled DbContext factory for GraphQL
-builder.Services.AddPooledDbContextFactory<ApplicationDbContext>(options => 
-    options.UseSqlServer(connectionString));
-
 // Add GraphQL services
 builder.Services
     .AddGraphQLServer()
@@ -136,8 +133,8 @@ builder.Services
     .AddMutationType<Mutation>()
     .AddType<UserType>()
     .AddType<AppointmentType>()
-    .AddType<ServiceType>()
-    .AddAuthorizationHandler<AuthorizationDirectiveHandler>();
+    .AddType<ServiceType>();
+    // .AddAuthorizationHandler<AuthorizationDirectiveHandler>(); - Commented out due to interface incompatibility
 
 // Add CORS services
 builder.Services.AddCors(options =>
@@ -248,49 +245,82 @@ async Task InitializeAsync(UserManager<ApplicationUser> userManager, RoleManager
     
     // 创建角色（如果不存在）
     string[] roleNames = { "Admin", "User", "ServiceProvider" };
+    
     foreach (var roleName in roleNames)
     {
         if (!await roleManager.RoleExistsAsync(roleName))
         {
-            initLogger.LogInformation("Creating role: {RoleName}", roleName);
             await roleManager.CreateAsync(new IdentityRole(roleName));
+            initLogger.LogInformation("Role {RoleName} created", roleName);
         }
     }
-
-    // 创建管理员用户（如果不存在）
-    var adminEmail = "czh1278341834@gmail.com";
+    
+    // 检查管理员用户是否存在，如果不存在则创建
+    var adminEmail = "admin@example.com";
     var adminUser = await userManager.FindByEmailAsync(adminEmail);
     
     if (adminUser == null)
     {
-        initLogger.LogInformation("Creating admin user: {AdminEmail}", adminEmail);
         adminUser = new ApplicationUser
         {
             UserName = adminEmail,
             Email = adminEmail,
-            FullName = "Administrator",
+            FullName = "System Administrator",
             EmailConfirmed = true,
-            Address = "unknown",
-            BusinessName = "Admin Business",
-            BusinessDescription="This is an Admin Account",
-            ProfilePictureUrl = "default.png",
-            IsServiceProvider = false,
+            Address = "Admin Office",
+            PhoneNumber = "555-ADMIN",
+            ProfilePictureUrl = "/images/default-profile.png",
         };
         
-        var result = await userManager.CreateAsync(adminUser, "Admin@123456");
+        var result = await userManager.CreateAsync(adminUser, "Admin123$");
         
         if (result.Succeeded)
         {
-            initLogger.LogInformation("Admin user created successfully");
+            initLogger.LogInformation("Admin user created");
             await userManager.AddToRoleAsync(adminUser, "Admin");
-            initLogger.LogInformation("Admin role assigned to user");
+            initLogger.LogInformation("Admin user added to Admin role");
         }
         else
         {
             foreach (var error in result.Errors)
             {
-                initLogger.LogError("Error creating admin user: {ErrorCode} - {ErrorDescription}", 
-                    error.Code, error.Description);
+                initLogger.LogError("Error creating admin user: {ErrorDescription}", error.Description);
+            }
+        }
+    }
+    
+    // 检查示例服务提供者用户是否存在，如果不存在则创建
+    var providerEmail = "provider@example.com";
+    var providerUser = await userManager.FindByEmailAsync(providerEmail);
+    
+    if (providerUser == null)
+    {
+        providerUser = new ApplicationUser
+        {
+            UserName = providerEmail,
+            Email = providerEmail,
+            FullName = "Example Provider",
+            EmailConfirmed = true,
+            Address = "Provider Office",
+            PhoneNumber = "555-PROV",
+            ProfilePictureUrl = "/images/default-profile.png",
+            BusinessName = "Example Service Provider",
+            BusinessDescription = "Providing excellent services since 2023.",
+        };
+        
+        var result = await userManager.CreateAsync(providerUser, "Provider123$");
+        
+        if (result.Succeeded)
+        {
+            initLogger.LogInformation("Provider user created");
+            await userManager.AddToRoleAsync(providerUser, "ServiceProvider");
+            initLogger.LogInformation("Provider user added to ServiceProvider role");
+        }
+        else
+        {
+            foreach (var error in result.Errors)
+            {
+                initLogger.LogError("Error creating provider user: {ErrorDescription}", error.Description);
             }
         }
     }
