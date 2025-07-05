@@ -22,6 +22,7 @@ namespace Appointment_System.Data
         public DbSet<Day> Days { get; set; }
         public DbSet<Segment> Segments { get; set; }
         public DbSet<Slot> Slots { get; set; }
+        public DbSet<CalendarEvent> CalendarEvents { get; set; }
 
         
         protected override void OnModelCreating(ModelBuilder builder)
