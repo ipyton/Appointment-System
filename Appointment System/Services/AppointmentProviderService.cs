@@ -161,27 +161,21 @@ namespace Appointment_System.Services
             appointment.UpdatedAt = DateTime.UtcNow;
 
             // Update bill status if needed
-            if (status == AppointmentStatus.Completed)
+            var bill = await _context.Bills
+                .FirstOrDefaultAsync(b => b.AppointmentId == appointmentId);
+                
+            if (bill != null)
             {
-                foreach (var bill in appointment.Bills)
+                if (status == AppointmentStatus.Completed && bill.Status == BillStatus.Pending)
                 {
-                    if (bill.Status == BillStatus.Pending)
-                    {
-                        bill.Status = BillStatus.Paid;
-                        bill.PaidAt = DateTime.UtcNow;
-                        bill.UpdatedAt = DateTime.UtcNow;
-                    }
+                    bill.Status = BillStatus.Paid;
+                    bill.PaidAt = DateTime.UtcNow;
+                    bill.UpdatedAt = DateTime.UtcNow;
                 }
-            }
-            else if (status == AppointmentStatus.Cancelled)
-            {
-                foreach (var bill in appointment.Bills)
+                else if (status == AppointmentStatus.Cancelled && bill.Status == BillStatus.Pending)
                 {
-                    if (bill.Status == BillStatus.Pending)
-                    {
-                        bill.Status = BillStatus.Cancelled;
-                        bill.UpdatedAt = DateTime.UtcNow;
-                    }
+                    bill.Status = BillStatus.Cancelled;
+                    bill.UpdatedAt = DateTime.UtcNow;
                 }
             }
 

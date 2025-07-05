@@ -18,7 +18,6 @@ namespace Appointment_System.GraphQL.Types
             descriptor.Field(a => a.Status).Description("The current status of the appointment");
             descriptor.Field(a => a.CreatedAt).Description("When the appointment was created");
             descriptor.Field(a => a.UpdatedAt).Description("When the appointment was last updated");
-            descriptor.Field(a => a.BillId).Description("The bill associated with the appointment");
             descriptor.Field(a => a.AppointmentDate).Description("The date of the appointment");
             descriptor.Field(a => a.StartTime).Description("The start time of the appointment");
             descriptor.Field(a => a.EndTime).Description("The end time of the appointment");

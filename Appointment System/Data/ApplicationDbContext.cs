@@ -77,11 +77,12 @@ namespace Appointment_System.Data
                 .HasForeignKey<Appointment>(a => a.SlotId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            // Configure Appointment
+            // Fix the Bill to Appointment relationship
+            // One Appointment can have one Bill
             builder.Entity<Appointment>()
                 .HasOne<Bill>()
                 .WithOne()
-                .HasForeignKey<Appointment>(a => a.BillId)
+                .HasForeignKey<Bill>(b => b.AppointmentId)
                 .OnDelete(DeleteBehavior.NoAction);
 
             // Configure Message

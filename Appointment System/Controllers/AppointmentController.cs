@@ -14,7 +14,7 @@ using Appointment_System.Data;
 namespace Appointment_System.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("[controller]")]
     [Authorize]
     public class AppointmentController : ControllerBase
     {
@@ -102,6 +102,7 @@ namespace Appointment_System.Controllers
         }
 
         [HttpPost("book")]
+        [Authorize(Roles = "User")]
         public async Task<IActionResult> BookAppointment([FromBody] BookAppointmentDto dto)
         {
             if (!ModelState.IsValid)
@@ -216,18 +217,10 @@ namespace Appointment_System.Controllers
     {
         [Required]
         public int ServiceId { get; set; }
-        
-        [Required]
-        public int TemplateId { get; set; }
+
         
         [Required]
         public int SlotId { get; set; }
-        
-        [Required]
-        public int DayId { get; set; }
-        
-        [Required]
-        public int SegmentId { get; set; }
         
         [StringLength(500)]
         public string Notes { get; set; }

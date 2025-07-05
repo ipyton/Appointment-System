@@ -37,17 +37,10 @@ namespace Appointment_System.Models
 
         public DateTime? UpdatedAt { get; set; }
 
-
-        public int BillId { get; set; }
-
-        
         // Add missing properties for time management
         public DateTime AppointmentDate { get; set; }
         public DateTime StartTime { get; set; }
         public DateTime EndTime { get; set; }
-        
-        // Navigation property for bills
-        public virtual ICollection<Bill> Bills { get; set; }
     }
 
     public enum AppointmentStatus
