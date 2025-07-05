@@ -10,6 +10,7 @@ using Appointment_System.Data;
 using Appointment_System.Models;
 using HotChocolate.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
+using Appointment_System.GraphQL.Attributes;
 
 namespace Appointment_System.GraphQL.Queries
 {
@@ -20,7 +21,7 @@ namespace Appointment_System.GraphQL.Queries
         [UseProjection]
         [UseFiltering]
         [UseSorting]
-        [Authorize(Roles = new[] { "Admin" })]
+        [Authorize(Roles = new string[] { "Admin" })]
         [GraphQLDescription("Get all users in the system")]
         public IQueryable<ApplicationUser> GetUsers([ScopedService] ApplicationDbContext context)
         {
@@ -46,7 +47,7 @@ namespace Appointment_System.GraphQL.Queries
         [GraphQLDescription("Get all appointments")]
         public IQueryable<Appointment> GetAppointments([ScopedService] ApplicationDbContext context)
         {
-            return context.Appointments.Include(a => a.User).Include(a => a.Service);
+            return context.Appointments;
         }
         
         [UseDbContext(typeof(ApplicationDbContext))]
@@ -78,7 +79,7 @@ namespace Appointment_System.GraphQL.Queries
         }
         
         [GraphQLDescription("Get a user by ID")]
-        public async Task<ApplicationUser> GetUserById(
+        public async Task<ApplicationUser?> GetUserById(
             [Service] ApplicationDbContext context,
             string id)
         {
@@ -86,7 +87,7 @@ namespace Appointment_System.GraphQL.Queries
         }
         
         [GraphQLDescription("Get a service by ID")]
-        public async Task<Service> GetServiceById(
+        public async Task<Service?> GetServiceById(
             [Service] ApplicationDbContext context,
             int id)
         {
@@ -94,7 +95,7 @@ namespace Appointment_System.GraphQL.Queries
         }
         
         [GraphQLDescription("Get an appointment by ID")]
-        public async Task<Appointment> GetAppointmentById(
+        public async Task<Appointment?> GetAppointmentById(
             [Service] ApplicationDbContext context,
             int id)
         {
