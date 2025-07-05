@@ -53,32 +53,48 @@ namespace Appointment_System.Services
         /// </summary>
         public async Task CreateOrUpdateIndexAsync()
         {
-
-                
             // Define fields for the index
-    var fields = new List<SearchField>
-    {
-        new SimpleField("id", SearchFieldDataType.String) { IsKey = true, IsFilterable = true },
-        new SearchableField("type") { IsFilterable = true, IsSortable = true },
-        new SearchableField("name") { IsFilterable = true, IsSortable = true },
-        new SearchableField("description"),
-        new SimpleField("isActive", SearchFieldDataType.Boolean) { IsFilterable = true },
-        new SimpleField("createdAt", SearchFieldDataType.DateTimeOffset) { IsFilterable = true, IsSortable = true },
-        new SearchableField("email") { IsFilterable = true },
-        new SearchableField("address"),
-        new SimpleField("isServiceProvider", SearchFieldDataType.Boolean) { IsFilterable = true },
-        new SearchableField("businessName"),
-        new SimpleField("price", SearchFieldDataType.Double) { IsFilterable = true, IsSortable = true },
-        new SimpleField("durationMinutes", SearchFieldDataType.Int32) { IsFilterable = true },
-        new SimpleField("providerId", SearchFieldDataType.String) { IsFilterable = true },
-        new SearchField("tags", SearchFieldDataType.Collection(SearchFieldDataType.String)) { IsSearchable = true, IsFilterable = true, IsFacetable = true }
-    };
+            var fields = new List<SearchField>
+            {
+                new SimpleField("id", SearchFieldDataType.String) { IsKey = true, IsFilterable = true },
+                new SearchableField("type") { IsFilterable = true, IsSortable = true, IsFacetable = true },
+                new SearchableField("name") { IsFilterable = true, IsSortable = true },
+                new SearchableField("description"),
+                new SimpleField("isActive", SearchFieldDataType.Boolean) { IsFilterable = true },
+                new SimpleField("createdAt", SearchFieldDataType.DateTimeOffset) { IsFilterable = true, IsSortable = true },
+                new SearchableField("email") { IsFilterable = true },
+                new SearchableField("address"),
+                new SimpleField("isServiceProvider", SearchFieldDataType.Boolean) { IsFilterable = true },
+                new SearchableField("businessName"),
+                new SimpleField("price", SearchFieldDataType.Double) { IsFilterable = true, IsSortable = true },
+                new SimpleField("durationMinutes", SearchFieldDataType.Int32) { IsFilterable = true },
+                new SimpleField("providerId", SearchFieldDataType.String) { IsFilterable = true },
+                new SearchField("tags", SearchFieldDataType.Collection(SearchFieldDataType.String)) { IsSearchable = true, IsFilterable = true, IsFacetable = true }
+            };
 
             var definition = new SearchIndex(_indexName, fields);
 
             // Add suggesters for autocomplete functionality
             var suggester = new SearchSuggester("sg", new[] { "name", "description", "email", "businessName" });
             definition.Suggesters.Add(suggester);
+
+            // Create scoring profile
+            var scoringProfile = new ScoringProfile("prioritizeName");
+            
+            // Add text weights
+            scoringProfile.TextWeights = new TextWeights(
+                new Dictionary<string, double>
+                {
+                    { "name", 5.0 },
+                    { "description", 2.0 },
+                    { "tags", 3.0 }
+                });
+
+            // Add the scoring profile to the index
+            definition.ScoringProfiles.Add(scoringProfile);
+            
+            // Set as default scoring profile (optional)
+            definition.DefaultScoringProfile = "prioritizeName";
 
             await _indexClient.CreateOrUpdateIndexAsync(definition);
         }
@@ -191,10 +207,17 @@ namespace Appointment_System.Services
                 }
             }
 
+            // Specify which fields to search with different weights
+            options.SearchFields.Add("name");
+            options.SearchFields.Add("description");
+            options.SearchFields.Add("businessName");
+            options.SearchFields.Add("tags");
+
             // Add facets for filtering
-            options.Facets.Add("tags");
-            options.Facets.Add("isServiceProvider");
-            options.Facets.Add("isActive");
+            options.Facets.Add("type");
+
+            // Set the default scoring profile or use a custom one
+            options.ScoringProfile = "prioritizeName";
 
             return await _searchClient.SearchAsync<Dictionary<string, object>>(searchText, options);
         }
