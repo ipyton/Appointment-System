@@ -126,6 +126,80 @@ namespace Appointment_System.Controllers
             return Ok(result);
         }
 
+        /// <summary>
+        /// Gets all services with paging
+        /// </summary>
+        /// <param name="page">Page number (1-based)</param>
+        /// <param name="pageSize">Number of items per page</param>
+        /// <param name="includeInactive">Whether to include inactive services</param>
+        /// <returns>Paged list of services with provider information and pagination metadata</returns>
+        [HttpGet("paged")]
+        public async Task<ActionResult<object>> GetPagedServices(int page = 1, int pageSize = 10, bool includeInactive = false)
+        {
+            if (page < 1)
+            {
+                return BadRequest("Page must be greater than or equal to 1");
+            }
+
+            if (pageSize < 1 || pageSize > 100)
+            {
+                return BadRequest("Page size must be between 1 and 100");
+            }
+
+            try
+            {
+                // Build query for services
+                var query = _context.Services.AsQueryable();
+                
+                // Filter by active status if needed
+                if (!includeInactive)
+                {
+                    query = query.Where(s => s.IsActive);
+                }
+                
+                // Get total count for pagination metadata
+                var totalCount = await query.CountAsync();
+                
+                // Calculate total pages
+                var totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
+                
+                // Get paged data with provider information
+                var pagedServices = await query
+                    .Skip((page - 1) * pageSize)
+                    .Take(pageSize)
+                    .Join(
+                        _context.Users,
+                        service => service.ProviderId,
+                        user => user.Id,
+                        (service, user) => new
+                        {
+                            Service = service,
+                            Id = user.Id,
+                            FullName = user.FullName,
+                            BusinessName = user.BusinessName,
+                            Email = user.Email
+                        })
+                    .ToListAsync();
+                
+                // Create result with pagination metadata
+                var result = new
+                {
+                    TotalCount = totalCount,
+                    TotalPages = totalPages,
+                    CurrentPage = page,
+                    PageSize = pageSize,
+                    Services = pagedServices
+                };
+                
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving paged services");
+                return StatusCode(500, $"An error occurred: {ex.Message}");
+            }
+        }
+
         [HttpPost("create")]
         [Authorize(Roles = "ServiceProvider")]
         public async Task<IActionResult> CreateService([FromBody] ServiceCreationDto dto)
@@ -182,8 +256,6 @@ namespace Appointment_System.Controllers
                 );
             }
         }
-
-
 
         // PUT: api/Services/5
         [HttpPut("{id}")]
