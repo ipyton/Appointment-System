@@ -38,6 +38,11 @@ namespace Appointment_System.Models
         [ForeignKey("AppointmentId")]
         public Appointment Appointment { get; set; }
         
+        public int? ServiceId { get; set; }
+        
+        [StringLength(100)]
+        public string ServiceName { get; set; }
+        
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         
         public DateTime? UpdatedAt { get; set; }

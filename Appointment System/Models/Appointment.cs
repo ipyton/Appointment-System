@@ -41,6 +41,29 @@ namespace Appointment_System.Models
         public DateTime AppointmentDate { get; set; }
         public DateTime StartTime { get; set; }
         public DateTime EndTime { get; set; }
+        
+        // Payment related properties
+        [StringLength(50)]
+        public string PaymentMethod { get; set; }
+        
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal? PaymentAmount { get; set; }
+        
+        [StringLength(3)]
+        public string PaymentCurrency { get; set; }
+        
+        public DateTime? PaymentDate { get; set; }
+        
+        [StringLength(500)]
+        public string SpecialRequests { get; set; }
+        
+        // Contact information
+        [StringLength(100)]
+        [EmailAddress]
+        public string ContactEmail { get; set; }
+        
+        [StringLength(20)]
+        public string ContactPhone { get; set; }
     }
 
     public enum AppointmentStatus
