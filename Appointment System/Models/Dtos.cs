@@ -20,7 +20,7 @@ namespace Appointment_System.Models
         [Required]
         [Range(5, 480)]
         public int DurationMinutes { get; set; }
-        
+
         public bool IsActive { get; set; } = true;
     }
 
@@ -70,11 +70,10 @@ namespace Appointment_System.Models
         public AppointmentStatus Status { get; set; }
     }
 
-
     public class SendMessageDto
     {
         [Required]
         [StringLength(1000)]
         public string Content { get; set; }
     }
-} 
+}

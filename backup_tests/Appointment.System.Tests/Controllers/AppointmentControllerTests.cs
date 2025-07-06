@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using Appointment_System.Controllers;
@@ -12,7 +13,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
-using System.Linq;
 
 namespace Appointment.System.Tests.Controllers
 {
@@ -28,14 +28,21 @@ namespace Appointment.System.Tests.Controllers
 
         private AppointmentController SetupController(ApplicationDbContext dbContext)
         {
-            var appointmentService = new AppointmentClientService(dbContext, Mock.Of<ILogger<AppointmentClientService>>());
-            var controller = new AppointmentController(appointmentService, dbContext, _loggerMock.Object);
+            var appointmentService = new AppointmentClientService(
+                dbContext,
+                Mock.Of<ILogger<AppointmentClientService>>()
+            );
+            var controller = new AppointmentController(
+                appointmentService,
+                dbContext,
+                _loggerMock.Object
+            );
 
             // Setup ClaimsPrincipal
             var claims = new List<Claim>
             {
                 new Claim(ClaimTypes.NameIdentifier, _userId),
-                new Claim(ClaimTypes.Name, "testuser@example.com")
+                new Claim(ClaimTypes.Name, "testuser@example.com"),
             };
             var identity = new ClaimsIdentity(claims, "TestAuthType");
             var claimsPrincipal = new ClaimsPrincipal(identity);
@@ -43,7 +50,7 @@ namespace Appointment.System.Tests.Controllers
             // Setup controller context
             controller.ControllerContext = new ControllerContext
             {
-                HttpContext = new DefaultHttpContext { User = claimsPrincipal }
+                HttpContext = new DefaultHttpContext { User = claimsPrincipal },
             };
 
             return controller;
@@ -110,7 +117,7 @@ namespace Appointment.System.Tests.Controllers
                 SlotId = 1,
                 DayId = 1,
                 SegmentId = 1,
-                Notes = "Test appointment"
+                Notes = "Test appointment",
             };
 
             // Act
@@ -131,7 +138,7 @@ namespace Appointment.System.Tests.Controllers
             // Arrange
             var dbContext = DatabaseHelper.GetDatabaseContext();
             var controller = SetupController(dbContext);
-            
+
             // Book an appointment first
             var dto = new BookAppointmentDto
             {
@@ -140,7 +147,7 @@ namespace Appointment.System.Tests.Controllers
                 SlotId = 1,
                 DayId = 1,
                 SegmentId = 1,
-                Notes = "Test appointment"
+                Notes = "Test appointment",
             };
             await controller.BookAppointment(dto);
 
@@ -160,7 +167,7 @@ namespace Appointment.System.Tests.Controllers
             // Arrange
             var dbContext = DatabaseHelper.GetDatabaseContext();
             var controller = SetupController(dbContext);
-            
+
             // Book an appointment first
             var dto = new BookAppointmentDto
             {
@@ -169,7 +176,7 @@ namespace Appointment.System.Tests.Controllers
                 SlotId = 1,
                 DayId = 1,
                 SegmentId = 1,
-                Notes = "Test appointment"
+                Notes = "Test appointment",
             };
             var bookResult = await controller.BookAppointment(dto);
             var createdAtActionResult = Assert.IsType<CreatedAtActionResult>(bookResult);
@@ -180,7 +187,7 @@ namespace Appointment.System.Tests.Controllers
 
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
-            
+
             // Verify appointment was cancelled
             var cancelledAppointment = await dbContext.Appointments.FindAsync(appointment.Id);
             Assert.Equal(AppointmentStatus.Cancelled, cancelledAppointment.Status);
@@ -200,4 +207,4 @@ namespace Appointment.System.Tests.Controllers
             Assert.IsType<NotFoundObjectResult>(result);
         }
     }
-} 
+}

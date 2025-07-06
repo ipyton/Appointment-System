@@ -12,7 +12,6 @@ namespace Appointment_System.Models
         [Required]
         public int AppointmentId { get; set; }
 
-
         [Required]
         [Column(TypeName = "decimal(18,2)")]
         public decimal Amount { get; set; }
@@ -45,7 +44,7 @@ namespace Appointment_System.Models
         Paid,
         Refunded,
         Failed,
-        Cancelled
+        Cancelled,
     }
 
     public enum PaymentMethod
@@ -55,6 +54,6 @@ namespace Appointment_System.Models
         Cash,
         BankTransfer,
         MobilePayment,
-        Other
+        Other,
     }
-} 
+}

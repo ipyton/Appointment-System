@@ -14,4 +14,4 @@ namespace Appointment_System.Models
 
         public bool RememberMe { get; set; }
     }
-} 
+}
