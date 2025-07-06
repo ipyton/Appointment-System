@@ -28,22 +28,29 @@ namespace AppointmentSystem.Tests.Controllers
             _appointmentServiceMock = new Mock<AppointmentClientService>(
                 MockBehavior.Loose,
                 Mock.Of<ApplicationDbContext>(),
-                Mock.Of<ILogger<AppointmentClientService>>());
+                Mock.Of<ILogger<AppointmentClientService>>()
+            );
         }
 
         private AppointmentController SetupController(ApplicationDbContext dbContext = null)
         {
             var controller = new AppointmentController(
-                dbContext != null ? new AppointmentClientService(dbContext, Mock.Of<ILogger<AppointmentClientService>>()) : _appointmentServiceMock.Object,
+                dbContext != null
+                    ? new AppointmentClientService(
+                        dbContext,
+                        Mock.Of<ILogger<AppointmentClientService>>()
+                    )
+                    : _appointmentServiceMock.Object,
                 dbContext ?? Mock.Of<ApplicationDbContext>(),
-                _loggerMock.Object);
+                _loggerMock.Object
+            );
 
             // Setup ClaimsPrincipal for authentication
             var claims = new List<Claim>
             {
                 new Claim(ClaimTypes.NameIdentifier, _userId),
                 new Claim(ClaimTypes.Name, "testuser@example.com"),
-                new Claim(ClaimTypes.Role, "User")
+                new Claim(ClaimTypes.Role, "User"),
             };
             var identity = new ClaimsIdentity(claims, "TestAuthType");
             var claimsPrincipal = new ClaimsPrincipal(identity);
@@ -51,7 +58,7 @@ namespace AppointmentSystem.Tests.Controllers
             // Setup controller context
             controller.ControllerContext = new ControllerContext
             {
-                HttpContext = new DefaultHttpContext { User = claimsPrincipal }
+                HttpContext = new DefaultHttpContext { User = claimsPrincipal },
             };
 
             return controller;
@@ -118,7 +125,7 @@ namespace AppointmentSystem.Tests.Controllers
                 SlotId = 1,
                 DayId = 1,
                 SegmentId = 1,
-                Notes = "Test appointment"
+                Notes = "Test appointment",
             };
 
             // Act
@@ -139,7 +146,7 @@ namespace AppointmentSystem.Tests.Controllers
             // Arrange
             var dbContext = DatabaseHelper.GetDatabaseContext();
             var controller = SetupController(dbContext);
-            
+
             // Book an appointment first
             var dto = new BookAppointmentDto
             {
@@ -148,7 +155,7 @@ namespace AppointmentSystem.Tests.Controllers
                 SlotId = 1,
                 DayId = 1,
                 SegmentId = 1,
-                Notes = "Test appointment"
+                Notes = "Test appointment",
             };
             await controller.BookAppointment(dto);
 
@@ -162,4 +169,4 @@ namespace AppointmentSystem.Tests.Controllers
             Assert.Equal(_userId, appointments.First().UserId);
         }
     }
-} 
+}

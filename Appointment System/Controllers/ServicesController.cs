@@ -1,17 +1,17 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
 using Appointment_System.Data;
 using Appointment_System.Models;
-using Appointment_System.Services;
 using Appointment_System.Models.DTOs;
+using Appointment_System.Services;
+using Appointment_System.Services.Mappers;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using System.Security.Claims;
-using Appointment_System.Services.Mappers;
 
 namespace Appointment_System.Controllers
 {
@@ -37,49 +37,53 @@ namespace Appointment_System.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<object>>> GetServices()
         {
-            var services = await _context.Services
-                .Where(s => s.IsActive)
+            var services = await _context
+                .Services.Where(s => s.IsActive)
                 .Join(
                     _context.Users,
                     service => service.ProviderId,
                     user => user.Id,
-                    (service, user) => new
-                    {
-                        Service = service,
-                        Provider = new
+                    (service, user) =>
+                        new
                         {
-                            Id = user.Id,
-                            FullName = user.FullName,
-                            BusinessName = user.BusinessName,
-                            Email = user.Email
+                            Service = service,
+                            Provider = new
+                            {
+                                Id = user.Id,
+                                FullName = user.FullName,
+                                BusinessName = user.BusinessName,
+                                Email = user.Email,
+                            },
                         }
-                    })
+                )
                 .ToListAsync();
-            
+
             return Ok(services);
         }
 
         [HttpGet("{id}")]
         public async Task<ActionResult<object>> GetService(int id)
         {
-            var serviceWithProvider = await _context.Services
-                .Where(s => s.Id == id)
+            var serviceWithProvider = await _context
+                .Services.Where(s => s.Id == id)
                 .Join(
                     _context.Users,
                     service => service.ProviderId,
                     user => user.Id,
-                    (service, user) => new
-                    {
-                        Service = service,
-                        Provider = new
+                    (service, user) =>
+                        new
                         {
-                            Id = user.Id,
-                            FullName = user.FullName,
-                            BusinessName = user.BusinessName,
-                            Email = user.Email,
-                            PhoneNumber = user.PhoneNumber
+                            Service = service,
+                            Provider = new
+                            {
+                                Id = user.Id,
+                                FullName = user.FullName,
+                                BusinessName = user.BusinessName,
+                                Email = user.Email,
+                                PhoneNumber = user.PhoneNumber,
+                            },
                         }
-                    })
+                )
                 .FirstOrDefaultAsync();
 
             if (serviceWithProvider == null)
@@ -99,29 +103,29 @@ namespace Appointment_System.Controllers
             {
                 return Unauthorized("User not authenticated properly");
             }
-            
+
             // First get provider information
-            var provider = await _context.Users
-                .Where(u => u.Id == userId)
-                .Select(u => new {
+            var provider = await _context
+                .Users.Where(u => u.Id == userId)
+                .Select(u => new
+                {
                     Id = u.Id,
                     FullName = u.FullName,
                     BusinessName = u.BusinessName,
-                    Email = u.Email
+                    Email = u.Email,
                 })
                 .FirstOrDefaultAsync();
-                
+
             // Then get services with arrangements
-            var services = await _context.Services
-                .Where(s => s.ProviderId == userId)
+            var services = await _context
+                .Services.Where(s => s.ProviderId == userId)
                 .Include(s => s.Arrangements)
                 .ToListAsync();
 
             // Combine the data
-            var result = services.Select(service => new {
-                Service = service,
-                Provider = provider
-            }).ToList();
+            var result = services
+                .Select(service => new { Service = service, Provider = provider })
+                .ToList();
 
             return Ok(result);
         }
@@ -134,7 +138,11 @@ namespace Appointment_System.Controllers
         /// <param name="includeInactive">Whether to include inactive services</param>
         /// <returns>Paged list of services with provider information and pagination metadata</returns>
         [HttpGet("paged")]
-        public async Task<ActionResult<object>> GetPagedServices(int page = 1, int pageSize = 10, bool includeInactive = false)
+        public async Task<ActionResult<object>> GetPagedServices(
+            int page = 1,
+            int pageSize = 10,
+            bool includeInactive = false
+        )
         {
             if (page < 1)
             {
@@ -150,19 +158,19 @@ namespace Appointment_System.Controllers
             {
                 // Build query for services
                 var query = _context.Services.AsQueryable();
-                
+
                 // Filter by active status if needed
                 if (!includeInactive)
                 {
                     query = query.Where(s => s.IsActive);
                 }
-                
+
                 // Get total count for pagination metadata
                 var totalCount = await query.CountAsync();
-                
+
                 // Calculate total pages
                 var totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
-                
+
                 // Get paged data with provider information
                 var pagedServices = await query
                     .Skip((page - 1) * pageSize)
@@ -171,16 +179,18 @@ namespace Appointment_System.Controllers
                         _context.Users,
                         service => service.ProviderId,
                         user => user.Id,
-                        (service, user) => new
-                        {
-                            Service = service,
-                            Id = user.Id,
-                            FullName = user.FullName,
-                            BusinessName = user.BusinessName,
-                            Email = user.Email
-                        })
+                        (service, user) =>
+                            new
+                            {
+                                Service = service,
+                                Id = user.Id,
+                                FullName = user.FullName,
+                                BusinessName = user.BusinessName,
+                                Email = user.Email,
+                            }
+                    )
                     .ToListAsync();
-                
+
                 // Create result with pagination metadata
                 var result = new
                 {
@@ -188,9 +198,9 @@ namespace Appointment_System.Controllers
                     TotalPages = totalPages,
                     CurrentPage = page,
                     PageSize = pageSize,
-                    Services = pagedServices
+                    Services = pagedServices,
                 };
-                
+
                 return Ok(result);
             }
             catch (Exception ex)
@@ -230,9 +240,13 @@ namespace Appointment_System.Controllers
                     _context.Arrangements.AddRange(arrangements);
                     await _context.SaveChangesAsync();
                 }
-                
+
                 // Generate and save slots
-                var slots = await ServiceMapper.GenerateSlotsFromService(service.Id, dto.Duration, _context);
+                var slots = await ServiceMapper.GenerateSlotsFromService(
+                    service.Id,
+                    dto.Duration,
+                    _context
+                );
                 if (slots.Any())
                 {
                     _context.Slots.AddRange(slots);
@@ -346,7 +360,11 @@ namespace Appointment_System.Controllers
         /// <returns>Dictionary of dates and their slot counts</returns>
         [HttpGet("slots-by-month")]
         [Authorize(Roles = "ServiceProvider,Admin,User")]
-        public async Task<ActionResult<Dictionary<int, int>>> GetSlotsByMonth(int year, int month, int? serviceId = null)
+        public async Task<ActionResult<Dictionary<int, int>>> GetSlotsByMonth(
+            int year,
+            int month,
+            int? serviceId = null
+        )
         {
             if (month < 1 || month > 12)
             {
@@ -357,13 +375,13 @@ namespace Appointment_System.Controllers
             {
                 // Build query to get slots for the specified month
                 var query = _context.Slots.AsQueryable();
-                
+
                 // Add service filter if provided
                 if (serviceId.HasValue)
                 {
                     query = query.Where(s => s.ServiceId == serviceId.Value);
                 }
-                
+
                 // Filter by year and month
                 query = query.Where(s => s.Date.Year == year && s.Date.Month == month);
 
@@ -390,7 +408,10 @@ namespace Appointment_System.Controllers
         /// <returns>List of slots for the specified date</returns>
         [HttpGet("slots-by-date")]
         [Authorize(Roles = "ServiceProvider,Admin,User")]
-        public async Task<ActionResult<IEnumerable<Slot>>> GetSlotsByDate(string date, int? serviceId = null)
+        public async Task<ActionResult<IEnumerable<Slot>>> GetSlotsByDate(
+            string date,
+            int? serviceId = null
+        )
         {
             if (!DateOnly.TryParse(date, out DateOnly parsedDate))
             {
@@ -401,19 +422,19 @@ namespace Appointment_System.Controllers
             {
                 // Build query to get slots for the specified date
                 var query = _context.Slots.AsQueryable();
-                
+
                 // Add service filter if provided
                 if (serviceId.HasValue)
                 {
                     query = query.Where(s => s.ServiceId == serviceId.Value);
                 }
-                
+
                 // Filter by date
                 query = query.Where(s => s.Date == parsedDate);
 
                 // Order by start time
                 var slots = await query.OrderBy(s => s.StartTime).ToListAsync();
-                
+
                 if (!slots.Any())
                 {
                     return Ok(new List<Slot>());
@@ -435,24 +456,26 @@ namespace Appointment_System.Controllers
         [HttpGet("all-services")]
         public async Task<ActionResult<IEnumerable<object>>> GetAllServices()
         {
-            var services = await _context.Services
-                .Join(
+            var services = await _context
+                .Services.Join(
                     _context.Users,
                     service => service.ProviderId,
                     user => user.Id,
-                    (service, user) => new
-                    {
-                        Service = service,
-                        Provider = new
+                    (service, user) =>
+                        new
                         {
-                            Id = user.Id,
-                            FullName = user.FullName,
-                            BusinessName = user.BusinessName,
-                            Email = user.Email
+                            Service = service,
+                            Provider = new
+                            {
+                                Id = user.Id,
+                                FullName = user.FullName,
+                                BusinessName = user.BusinessName,
+                                Email = user.Email,
+                            },
                         }
-                    })
+                )
                 .ToListAsync();
-            
+
             return Ok(services);
         }
 

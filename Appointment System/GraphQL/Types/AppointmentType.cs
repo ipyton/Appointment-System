@@ -1,5 +1,5 @@
-using HotChocolate.Types;
 using Appointment_System.Models;
+using HotChocolate.Types;
 
 namespace Appointment_System.GraphQL.Types
 {
@@ -23,4 +23,4 @@ namespace Appointment_System.GraphQL.Types
             descriptor.Field(a => a.EndTime).Description("The end time of the appointment");
         }
     }
-} 
+}
