@@ -18,6 +18,9 @@ namespace Appointment_System.Models
         [Required]
         [ForeignKey("ServiceId")]
         public int ServiceId { get; set; }
+        
+        // Navigation property for Service
+        public virtual Service Service { get; set; }
 
 
         [Required]
@@ -26,7 +29,11 @@ namespace Appointment_System.Models
 
 
         [Required]
+        [ForeignKey("SlotId")]
         public int SlotId { get; set; }
+        
+        // Navigation property for Slot
+        public virtual Slot Slot { get; set; }
 
         [StringLength(500)]
         public string Notes { get; set; }
@@ -36,23 +43,6 @@ namespace Appointment_System.Models
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         public DateTime? UpdatedAt { get; set; }
-
-        // Add missing properties for time management
-        public DateTime AppointmentDate { get; set; }
-        public DateTime StartTime { get; set; }
-        public DateTime EndTime { get; set; }
-        
-        // Payment related properties
-        [StringLength(50)]
-        public string PaymentMethod { get; set; }
-        
-        [Column(TypeName = "decimal(18,2)")]
-        public decimal? PaymentAmount { get; set; }
-        
-        [StringLength(3)]
-        public string PaymentCurrency { get; set; }
-        
-        public DateTime? PaymentDate { get; set; }
         
         [StringLength(500)]
         public string SpecialRequests { get; set; }
@@ -64,6 +54,18 @@ namespace Appointment_System.Models
         
         [StringLength(20)]
         public string ContactPhone { get; set; }
+        
+        // Payment information
+        [StringLength(50)]
+        public string PaymentMethod { get; set; }
+        
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal? PaymentAmount { get; set; }
+        
+        [StringLength(3)]
+        public string PaymentCurrency { get; set; }
+        
+        public DateTime? PaymentDate { get; set; }
     }
 
     public enum AppointmentStatus

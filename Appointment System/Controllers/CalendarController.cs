@@ -13,7 +13,7 @@ namespace Appointment_System.Controllers
 {
     [Authorize]
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("[controller]")]
     public class CalendarController : ControllerBase
     {
         private readonly CalendarService _calendarService;
@@ -28,15 +28,106 @@ namespace Appointment_System.Controllers
             _logger = logger;
         }
 
-        [HttpGet]
+        /// <summary>
+        /// Get calendar events based on different view types: day, week, or month
+        /// </summary>
+        /// <param name="date">Reference date for the view (defaults to today if not specified)</param>
+        /// <param name="view">View type: "day", "week", or "month" (defaults to "month")</param>
+        /// <returns>List of calendar events for the specified time period</returns>
+        [HttpGet("get")]
         public async Task<IActionResult> GetEvents(
-            [FromQuery] DateTime? start,
-            [FromQuery] DateTime? end
+            [FromQuery] DateTime? date,
+            [FromQuery] string view = "month"
         )
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            DateTime start, end;
+
+            // Default to current date if not specified
+            date ??= DateTime.Today;
+
+            // Normalize view parameter
+            view = view?.ToLower() ?? "month";
+
+            switch (view)
+            {
+                case "day":
+                    // For day view, get events for the specific day only
+                    start = date.Value.Date;
+                    end = start.AddDays(1).AddSeconds(-1);
+                    break;
+
+                case "week":
+                    // For week view, get events for 7 days starting from the specified date
+                    start = date.Value.Date;
+                    end = start.AddDays(7).AddSeconds(-1);
+                    break;
+
+                case "month":
+                default:
+                    // For month view, get events for the entire month containing the specified date
+                    start = new DateTime(date.Value.Year, date.Value.Month, 1);
+                    end = start.AddMonths(1).AddSeconds(-1);
+                    break;
+            }
+
+            _logger.LogInformation(
+                "Fetching {View} calendar events for user {UserId} from {Start} to {End}",
+                view,
+                userId,
+                start,
+                end
+            );
+
             var events = await _calendarService.GetEventsAsync(userId, start, end);
-            return Ok(events);
+            return Ok(
+                new
+                {
+                    view = view,
+                    startDate = start,
+                    endDate = end,
+                    totalEvents = events.Count,
+                    events = events,
+                }
+            );
+        }
+
+        /// <summary>
+        /// Get calendar events for a custom date range
+        /// </summary>
+        /// <param name="start">Start date (required)</param>
+        /// <param name="end">End date (required)</param>
+        /// <returns>List of calendar events for the specified date range</returns>
+        [HttpGet("range")]
+        public async Task<IActionResult> GetEventsByDateRange(
+            [FromQuery, Required] DateTime start,
+            [FromQuery, Required] DateTime end
+        )
+        {
+            if (end < start)
+            {
+                return BadRequest(new { message = "End date must be after start date" });
+            }
+
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            _logger.LogInformation(
+                "Fetching custom range calendar events for user {UserId} from {Start} to {End}",
+                userId,
+                start,
+                end
+            );
+
+            var events = await _calendarService.GetEventsAsync(userId, start, end);
+            return Ok(
+                new
+                {
+                    startDate = start,
+                    endDate = end,
+                    totalEvents = events.Count,
+                    events = events,
+                }
+            );
         }
 
         [HttpGet("{id}")]
@@ -155,7 +246,7 @@ namespace Appointment_System.Controllers
         }
     }
 
-    public class CalendarEventDto
+    public class CalendarEventDto : IValidatableObject
     {
         [Required]
         [StringLength(100)]
@@ -174,5 +265,16 @@ namespace Appointment_System.Controllers
 
         [StringLength(50)]
         public string Color { get; set; }
+
+        public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+        {
+            if (EndTime <= StartTime)
+            {
+                yield return new ValidationResult(
+                    "End time must be after start time",
+                    new[] { nameof(EndTime) }
+                );
+            }
+        }
     }
 }

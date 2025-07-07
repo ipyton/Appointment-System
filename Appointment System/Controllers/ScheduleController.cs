@@ -160,13 +160,15 @@ namespace Appointment_System.Controllers
             int providerId
         )
         {
-            var query = _context.Appointments.Where(a => a.ProviderId == providerId);
+            var query = _context.Appointments
+                .Include(a => a.Slot)
+                .Where(a => a.ProviderId == providerId);
 
             if (startDate.HasValue)
-                query = query.Where(a => a.AppointmentDate >= startDate.Value);
+                query = query.Where(a => a.Slot.Date >= DateOnly.FromDateTime(startDate.Value));
 
             if (endDate.HasValue)
-                query = query.Where(a => a.AppointmentDate <= endDate.Value);
+                query = query.Where(a => a.Slot.Date <= DateOnly.FromDateTime(endDate.Value));
 
             var appointments = await query.ToListAsync();
 

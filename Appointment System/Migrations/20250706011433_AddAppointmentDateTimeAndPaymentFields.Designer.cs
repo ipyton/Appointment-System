@@ -4,6 +4,7 @@ using Appointment_System.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Appointment_System.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250706011433_AddAppointmentDateTimeAndPaymentFields")]
+    partial class AddAppointmentDateTimeAndPaymentFields
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -127,6 +130,9 @@ namespace Appointment_System.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<DateTime>("AppointmentDate")
+                        .HasColumnType("datetime2");
+
                     b.Property<string>("ContactEmail")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -140,10 +146,29 @@ namespace Appointment_System.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
+                    b.Property<DateTime>("EndTime")
+                        .HasColumnType("datetime2");
+
                     b.Property<string>("Notes")
                         .IsRequired()
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
+
+                    b.Property<decimal?>("PaymentAmount")
+                        .HasColumnType("decimal(18, 2)");
+
+                    b.Property<string>("PaymentCurrency")
+                        .IsRequired()
+                        .HasMaxLength(3)
+                        .HasColumnType("nvarchar(3)");
+
+                    b.Property<DateTime?>("PaymentDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("PaymentMethod")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
                     b.Property<int>("ProviderId")
                         .HasColumnType("int");
@@ -158,6 +183,9 @@ namespace Appointment_System.Migrations
                         .IsRequired()
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
+
+                    b.Property<DateTime>("StartTime")
+                        .HasColumnType("datetime2");
 
                     b.Property<int>("Status")
                         .HasColumnType("int");
@@ -691,7 +719,7 @@ namespace Appointment_System.Migrations
 
             modelBuilder.Entity("Appointment_System.Models.Appointment", b =>
                 {
-                    b.HasOne("Appointment_System.Models.Slot", "Slot")
+                    b.HasOne("Appointment_System.Models.Slot", null)
                         .WithOne()
                         .HasForeignKey("Appointment_System.Models.Appointment", "SlotId")
                         .OnDelete(DeleteBehavior.Restrict)
@@ -702,8 +730,6 @@ namespace Appointment_System.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
-
-                    b.Navigation("Slot");
                 });
 
             modelBuilder.Entity("Appointment_System.Models.Arrangement", b =>

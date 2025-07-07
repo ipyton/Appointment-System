@@ -100,28 +100,39 @@ namespace Appointment_System.Services
         /// <summary>
         /// Book an appointment
         /// </summary>
-        public async Task<Appointment> BookAppointmentAsync(string userId, int serviceId, DateTime startTime)
+        public async Task<Appointment> BookAppointmentAsync(string userId, int serviceId, int slotId)
         {
             var service = await _context.Services.FindAsync(serviceId);
             if (service == null)
                 throw new ArgumentException("Service not found");
+                
+            var slot = await _context.Slots.FindAsync(slotId);
+            if (slot == null)
+                throw new ArgumentException("Slot not found");
+                
+            if (!slot.IsAvailable || slot.CurrentAppointmentCount >= slot.MaxConcurrentAppointments)
+                throw new InvalidOperationException("This slot is not available for booking");
 
-            // Calculate end time based on service duration
-
-            // Check if the slot is available
             // Create the appointment
             var appointment = new Appointment
             {
                 UserId = userId,
                 ServiceId = serviceId,
-                AppointmentDate = startTime.Date,
-                StartTime = startTime,
+                SlotId = slotId,
                 Status = AppointmentStatus.Pending,
                 CreatedAt = DateTime.UtcNow
             };
 
-            // _context.Appointments.Add(appointment);
-            // await _context.SaveChangesAsync();
+            _context.Appointments.Add(appointment);
+            
+            // Update slot availability
+            slot.CurrentAppointmentCount++;
+            if (slot.CurrentAppointmentCount >= slot.MaxConcurrentAppointments)
+            {
+                slot.IsAvailable = false;
+            }
+            
+            await _context.SaveChangesAsync();
 
             // // Create a bill for the appointment
             // var bill = new Bill
@@ -147,6 +158,7 @@ namespace Appointment_System.Services
         public async Task<Appointment> GetAppointmentDetailsAsync(int appointmentId)
         {
             return await _context.Appointments
+                .Include(a => a.Slot)
                 .FirstOrDefaultAsync(a => a.Id == appointmentId);
         }
 
@@ -156,17 +168,35 @@ namespace Appointment_System.Services
         public async Task<bool> CancelAppointmentAsync(int appointmentId, string userId)
         {
             var appointment = await _context.Appointments
+                .Include(a => a.Slot)
                 .FirstOrDefaultAsync(a => a.Id == appointmentId && a.UserId == userId);
 
             if (appointment == null)
                 return false;
 
+            // Get the slot start time
+            var slot = appointment.Slot;
+            var startDateTime = new DateTime(
+                slot.Date.Year,
+                slot.Date.Month,
+                slot.Date.Day,
+                slot.StartTime.Hour,
+                slot.StartTime.Minute,
+                0);
+
             // Check if the appointment can be cancelled (e.g., not too close to start time)
-            if (appointment.StartTime <= DateTime.Now.AddHours(24))
+            if (startDateTime <= DateTime.Now.AddHours(24))
                 throw new InvalidOperationException("Appointments must be cancelled at least 24 hours in advance");
 
             appointment.Status = AppointmentStatus.Cancelled;
             appointment.UpdatedAt = DateTime.UtcNow;
+            
+            // Update slot availability
+            if (slot != null)
+            {
+                slot.CurrentAppointmentCount--;
+                slot.IsAvailable = true;
+            }
 
             // Update associated bill
             var bill = await _context.Bills
