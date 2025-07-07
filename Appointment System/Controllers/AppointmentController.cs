@@ -82,6 +82,29 @@ namespace Appointment_System.Controllers
             return Ok(slots);
         }
 
+        [HttpGet("getClientAppointments")]
+        public async Task<IActionResult> GetAppointmentsByUserId()
+        {
+            try
+            {
+                var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                
+                var appointments = await _context.Appointments
+                    .Include(a => a.Slot)
+                    .Include(a => a.Service)
+                    .Where(a => a.UserId == userId)
+                    .OrderByDescending(a => a.CreatedAt)
+                    .ToListAsync();
+
+                return Ok(appointments);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving appointments for current user");
+                return StatusCode(500, new { message = "An error occurred while retrieving appointments" });
+            }
+        }
+
         [HttpPost("book")]
         [Authorize(Roles = "User")]
         public async Task<IActionResult> BookAppointment([FromBody] BookAppointmentDto dto)
