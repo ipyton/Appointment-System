@@ -10,6 +10,7 @@ using Appointment_System.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Appointment_System.Controllers
 {
@@ -37,10 +38,7 @@ namespace Appointment_System.Controllers
         [AllowAnonymous]
         public async Task<IActionResult> GetAvailableServices()
         {
-            var services = await _context
-                .Services.Where(s => s.IsActive)
-                .Include(s => s.Arrangements)
-                .ToListAsync();
+            var services = await _appointmentService.GetAvailableServicesAsync();
             return Ok(services);
         }
 
@@ -48,9 +46,7 @@ namespace Appointment_System.Controllers
         [AllowAnonymous]
         public async Task<IActionResult> GetServiceDetails(int id)
         {
-            var service = await _context
-                .Services.Include(s => s.Arrangements)
-                .FirstOrDefaultAsync(s => s.Id == id && s.IsActive);
+            var service = await _appointmentService.GetServiceByIdAsync(id);
 
             if (service == null)
                 return NotFound(new { message = "Service not found" });
@@ -58,21 +54,11 @@ namespace Appointment_System.Controllers
             return Ok(service);
         }
 
-        [HttpGet("services/{id}/templates")]
-        [AllowAnonymous]
-        public async Task<IActionResult> GetServiceTemplates(int id)
-        {
-            var templates = await _context.Arrangements.Where(a => a.ServiceId == id).ToListAsync();
-
-            return Ok(templates);
-        }
-
         [HttpGet("templates/{id}/days")]
         [AllowAnonymous]
         public async Task<IActionResult> GetTemplateDays(int id)
         {
             var days = await _context.Days.Where(d => d.TemplateId == id).ToListAsync();
-
             return Ok(days);
         }
 
@@ -81,7 +67,6 @@ namespace Appointment_System.Controllers
         public async Task<IActionResult> GetDaySegments(int id)
         {
             var segments = await _context.Segments.Where(s => s.DayId == id).ToListAsync();
-
             return Ok(segments);
         }
 
@@ -89,12 +74,11 @@ namespace Appointment_System.Controllers
         [AllowAnonymous]
         public async Task<IActionResult> GetSlots(DateOnly date, int serviceId)
         {
-            var slots = await _context
-                .Slots.Where(s =>
-                    s.Date == date && s.ServiceId == serviceId && s.IsAvailable == true
-                )
+            var slots = await _context.Slots
+                .Where(s => s.Date == date && s.ServiceId == serviceId && s.IsAvailable)
+                .OrderBy(s => s.StartTime)
                 .ToListAsync();
-
+                
             return Ok(slots);
         }
 
@@ -108,38 +92,39 @@ namespace Appointment_System.Controllers
             try
             {
                 var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-
-                // Check if service exists
-                var service = await _context.Services.FindAsync(dto.ServiceId);
-                if (service == null)
-                    return NotFound(new { message = "Service not found" });
-
-                // Check if slot exists and is available
-                var slot = await _context.Slots.FirstOrDefaultAsync(s => s.Id == dto.SlotId);
-
+                
+                // Find the slot
+                var slot = await _context.Slots.FindAsync(dto.SlotId);
                 if (slot == null)
                     return NotFound(new { message = "Slot not found" });
+                    
+                if (!slot.IsAvailable || slot.CurrentAppointmentCount >= slot.MaxConcurrentAppointments)
+                    return BadRequest(new { message = "This slot is not available for booking" });
 
-                if (slot.IsAvailable == false)
-                    return BadRequest(new { message = "Slot is already booked" });
-
-                // Mark the slot as unavailable
-                slot.IsAvailable = false;
-
-                await _context.SaveChangesAsync();
-
-                // Create appointment
+                // Create the appointment
                 var appointment = new Appointment
                 {
                     UserId = userId,
                     ServiceId = dto.ServiceId,
                     SlotId = dto.SlotId,
-                    Notes = dto.Notes,
+                    ProviderId = 1, // This should be set based on the service or slot
                     Status = AppointmentStatus.Pending,
+                    Notes = dto.Notes,
+                    SpecialRequests = "",
                     CreatedAt = DateTime.UtcNow,
+                    ContactEmail = dto.ContactEmail,
+                    ContactPhone = dto.ContactPhone
                 };
 
                 _context.Appointments.Add(appointment);
+                
+                // Update slot availability
+                slot.CurrentAppointmentCount++;
+                if (slot.CurrentAppointmentCount >= slot.MaxConcurrentAppointments)
+                {
+                    slot.IsAvailable = false;
+                }
+                
                 await _context.SaveChangesAsync();
 
                 return CreatedAtAction(
@@ -169,10 +154,11 @@ namespace Appointment_System.Controllers
             {
                 var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
-                // Find the appointment
-                var appointment = await _context.Appointments.FirstOrDefaultAsync(a =>
-                    a.Id == paymentDto.AppointmentId
-                );
+                // Find the appointment with its slot
+                var appointment = await _context.Appointments
+                    .Include(a => a.Slot)
+                    .Include(a => a.Service)
+                    .FirstOrDefaultAsync(a => a.Id == paymentDto.AppointmentId);
 
                 if (appointment == null)
                     return NotFound(new { message = "Appointment not found" });
@@ -181,34 +167,50 @@ namespace Appointment_System.Controllers
                 // For now, we'll just update the appointment status
                 appointment.Status = AppointmentStatus.Confirmed;
                 appointment.UpdatedAt = DateTime.UtcNow;
-
-                // Add payment details
+                
+                // Update payment information
                 appointment.PaymentMethod = paymentDto.PaymentMethod;
                 appointment.PaymentAmount = paymentDto.Amount;
                 appointment.PaymentCurrency = paymentDto.Currency;
                 appointment.PaymentDate = DateTime.UtcNow;
-                appointment.SpecialRequests = paymentDto.SpecialRequests;
-
-                // Add contact information if provided
-                if (paymentDto.ContactInfo != null)
+                
+                // Add special requests if provided
+                if (!string.IsNullOrEmpty(paymentDto.SpecialRequests))
                 {
-                    appointment.ContactEmail = paymentDto.ContactInfo.Email;
-                    appointment.ContactPhone = paymentDto.ContactInfo.Phone;
+                    appointment.SpecialRequests = paymentDto.SpecialRequests;
                 }
+                
+                // Convert slot date/time to DateTime for calendar event
+                var slot = appointment.Slot;
+                var startDateTime = new DateTime(
+                    slot.Date.Year, 
+                    slot.Date.Month, 
+                    slot.Date.Day,
+                    slot.StartTime.Hour,
+                    slot.StartTime.Minute,
+                    0);
+                    
+                var endDateTime = new DateTime(
+                    slot.Date.Year, 
+                    slot.Date.Month, 
+                    slot.Date.Day,
+                    slot.EndTime.Hour,
+                    slot.EndTime.Minute,
+                    0);
 
                 // Add calendar event for the user
                 var calendarEvent = new CalendarEvent
                 {
-                    Title = paymentDto.ServiceDetails.ServiceName,
+                    Title = appointment.Service?.Name ?? "Appointment",
                     Description = appointment.Notes,
-                    StartTime = paymentDto.ServiceDetails.StartTime,
-                    EndTime = paymentDto.ServiceDetails.EndTime,
+                    StartTime = startDateTime,
+                    EndTime = endDateTime,
                     IsAllDay = false,
                     Color = "#4CAF50", // Green color for confirmed appointments
                     UserId = userId,
                     AppointmentId = appointment.Id,
-                    ServiceId = paymentDto.ServiceDetails.ServiceId,
-                    ServiceName = paymentDto.ServiceDetails.ServiceName,
+                    ServiceId = appointment.ServiceId,
+                    ServiceName = appointment.Service?.Name ?? "Service",
                     CreatedAt = DateTime.UtcNow,
                 };
 
@@ -241,7 +243,9 @@ namespace Appointment_System.Controllers
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
             var appointments = await _context
-                .Appointments.Where(a => a.UserId == userId)
+                .Appointments
+                .Include(a => a.Slot)
+                .Where(a => a.UserId == userId)
                 .ToListAsync();
 
             return Ok(appointments);
@@ -252,9 +256,9 @@ namespace Appointment_System.Controllers
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
-            var appointment = await _context.Appointments.FirstOrDefaultAsync(a =>
-                a.Id == id && a.UserId == userId
-            );
+            var appointment = await _context.Appointments
+                .Include(a => a.Slot)
+                .FirstOrDefaultAsync(a => a.Id == id && a.UserId == userId);
 
             if (appointment == null)
                 return NotFound(new { message = "Appointment not found" });
@@ -269,9 +273,9 @@ namespace Appointment_System.Controllers
             {
                 var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
-                var appointment = await _context.Appointments.FirstOrDefaultAsync(a =>
-                    a.Id == id && a.UserId == userId
-                );
+                var appointment = await _context.Appointments
+                    .Include(a => a.Slot)
+                    .FirstOrDefaultAsync(a => a.Id == id && a.UserId == userId);
 
                 if (appointment == null)
                     return NotFound(new { message = "Appointment not found" });
@@ -283,6 +287,14 @@ namespace Appointment_System.Controllers
                 // Update appointment status
                 appointment.Status = AppointmentStatus.Cancelled;
                 appointment.UpdatedAt = DateTime.UtcNow;
+                
+                // Update slot availability
+                var slot = appointment.Slot;
+                if (slot != null)
+                {
+                    slot.CurrentAppointmentCount--;
+                    slot.IsAvailable = true;
+                }
 
                 await _context.SaveChangesAsync();
 
@@ -309,6 +321,12 @@ namespace Appointment_System.Controllers
 
         [StringLength(500)]
         public string Notes { get; set; }
+        
+        [EmailAddress]
+        public string ContactEmail { get; set; }
+        
+        public string ContactPhone { get; set; }
+
     }
 
     public class PaymentDto
@@ -327,15 +345,10 @@ namespace Appointment_System.Controllers
         [StringLength(3)]
         public string Currency { get; set; }
 
-        public ContactInfoDto ContactInfo { get; set; }
-
         [StringLength(500)]
         public string SpecialRequests { get; set; }
 
         public CardDetailsDto CardDetails { get; set; }
-
-        [Required]
-        public ServiceDetailsDto ServiceDetails { get; set; }
     }
 
     public class ContactInfoDto
@@ -368,11 +381,5 @@ namespace Appointment_System.Controllers
         public string ProviderId { get; set; }
 
         public string ProviderName { get; set; }
-
-        [Required]
-        public DateTime StartTime { get; set; }
-
-        [Required]
-        public DateTime EndTime { get; set; }
     }
 }

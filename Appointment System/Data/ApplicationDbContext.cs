@@ -75,8 +75,8 @@ namespace Appointment_System.Data
 
             // Slot to Appointment relationship (one-to-one)
             builder
-                .Entity<Slot>()
-                .HasOne<Appointment>()
+                .Entity<Appointment>()
+                .HasOne(a => a.Slot)
                 .WithOne()
                 .HasForeignKey<Appointment>(a => a.SlotId)
                 .OnDelete(DeleteBehavior.Restrict);

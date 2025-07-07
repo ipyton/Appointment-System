@@ -98,10 +98,13 @@ namespace Appointment_System.Services
                 throw new UnauthorizedAccessException("You are not authorized to delete this service");
 
             // Check if there are any future appointments for this service
+            var now = DateTime.Now;
             var hasFutureAppointments = await _context.Appointments
+                .Include(a => a.Slot)
                 .AnyAsync(a => a.ServiceId == serviceId && 
-                              a.StartTime > DateTime.Now && 
-                              a.Status != AppointmentStatus.Cancelled);
+                               a.Status != AppointmentStatus.Cancelled &&
+                               (a.Slot.Date > DateOnly.FromDateTime(now) || 
+                               (a.Slot.Date == DateOnly.FromDateTime(now) && a.Slot.StartTime > TimeOnly.FromDateTime(now))));
 
             if (hasFutureAppointments)
                 throw new InvalidOperationException("Cannot delete a service with future appointments");
@@ -123,17 +126,18 @@ namespace Appointment_System.Services
         public async Task<List<Appointment>> GetProviderAppointmentsAsync(int providerId, DateTime? startDate = null, DateTime? endDate = null)
         {
             var query = _context.Appointments
+                .Include(a => a.Slot)
                 .Where(a => a.ProviderId == providerId);
 
             if (startDate.HasValue)
-                query = query.Where(a => a.AppointmentDate >= startDate.Value.Date);
+                query = query.Where(a => a.Slot.Date >= DateOnly.FromDateTime(startDate.Value));
 
             if (endDate.HasValue)
-                query = query.Where(a => a.AppointmentDate <= endDate.Value.Date);
+                query = query.Where(a => a.Slot.Date <= DateOnly.FromDateTime(endDate.Value));
 
             return await query
-                .OrderBy(a => a.AppointmentDate)
-                .ThenBy(a => a.StartTime)
+                .OrderBy(a => a.Slot.Date)
+                .ThenBy(a => a.Slot.StartTime)
                 .ToListAsync();
         }
 
@@ -143,6 +147,7 @@ namespace Appointment_System.Services
         public async Task<Appointment> GetAppointmentDetailsAsync(int appointmentId, string providerId)
         {
             return await _context.Appointments
+                .Include(a => a.Slot)
                 .FirstOrDefaultAsync(a => a.Id == appointmentId );
         }
 
@@ -152,6 +157,7 @@ namespace Appointment_System.Services
         public async Task<Appointment> UpdateAppointmentStatusAsync(int appointmentId, string providerId, AppointmentStatus status)
         {
             var appointment = await _context.Appointments
+                .Include(a => a.Slot)
                 .FirstOrDefaultAsync(a => a.Id == appointmentId);
 
             if (appointment == null)

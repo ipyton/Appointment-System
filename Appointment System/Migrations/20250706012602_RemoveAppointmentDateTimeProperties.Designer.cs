@@ -4,6 +4,7 @@ using Appointment_System.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Appointment_System.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250706012602_RemoveAppointmentDateTimeProperties")]
+    partial class RemoveAppointmentDateTimeProperties
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -145,6 +148,22 @@ namespace Appointment_System.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
 
+                    b.Property<decimal?>("PaymentAmount")
+                        .HasColumnType("decimal(18, 2)");
+
+                    b.Property<string>("PaymentCurrency")
+                        .IsRequired()
+                        .HasMaxLength(3)
+                        .HasColumnType("nvarchar(3)");
+
+                    b.Property<DateTime?>("PaymentDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("PaymentMethod")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
                     b.Property<int>("ProviderId")
                         .HasColumnType("int");
 
@@ -171,8 +190,7 @@ namespace Appointment_System.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("SlotId")
-                        .IsUnique();
+                    b.HasIndex("SlotId");
 
                     b.HasIndex("UserId");
 
@@ -692,8 +710,8 @@ namespace Appointment_System.Migrations
             modelBuilder.Entity("Appointment_System.Models.Appointment", b =>
                 {
                     b.HasOne("Appointment_System.Models.Slot", "Slot")
-                        .WithOne()
-                        .HasForeignKey("Appointment_System.Models.Appointment", "SlotId")
+                        .WithMany()
+                        .HasForeignKey("SlotId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 

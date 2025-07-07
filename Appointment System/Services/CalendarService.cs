@@ -146,12 +146,37 @@ namespace Appointment_System.Services
                 throw new ArgumentException("Service not found");
             }
             
+            // Load the slot data
+            var slot = await _context.Slots.FindAsync(appointment.SlotId);
+            
+            if (slot == null)
+            {
+                throw new ArgumentException("Slot not found");
+            }
+            
+            // Convert DateOnly and TimeOnly to DateTime
+            var startDateTime = new DateTime(
+                slot.Date.Year, 
+                slot.Date.Month, 
+                slot.Date.Day,
+                slot.StartTime.Hour,
+                slot.StartTime.Minute,
+                0);
+                
+            var endDateTime = new DateTime(
+                slot.Date.Year, 
+                slot.Date.Month, 
+                slot.Date.Day,
+                slot.EndTime.Hour,
+                slot.EndTime.Minute,
+                0);
+            
             var calendarEvent = new CalendarEvent
             {
                 Title = service.Name,
                 Description = $"Appointment: {service.Description}",
-                StartTime = appointment.StartTime,
-                EndTime = appointment.EndTime,
+                StartTime = startDateTime,
+                EndTime = endDateTime,
                 IsAllDay = false,
                 Color = "#4285F4", // Default blue color
                 UserId = appointment.UserId,

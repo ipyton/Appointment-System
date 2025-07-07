@@ -89,7 +89,7 @@ namespace Appointment_System.GraphQL.Mutations
         public async Task<Appointment> CreateAppointment(
             [ScopedService] ApplicationDbContext context,
             [Service] IHttpContextAccessor httpContextAccessor,
-            DateTime startTime,
+            int slotId,
             int serviceId,
             AppointmentStatus status = AppointmentStatus.Pending)
         {
@@ -105,12 +105,21 @@ namespace Appointment_System.GraphQL.Mutations
             {
                 throw new GraphQLException(new Error("Service not found", "SERVICE_NOT_FOUND"));
             }
+            
+            var slot = await context.Slots.FindAsync(slotId);
+            if (slot == null)
+            {
+                throw new GraphQLException(new Error("Slot not found", "SLOT_NOT_FOUND"));
+            }
+            
+            if (!slot.IsAvailable || slot.CurrentAppointmentCount >= slot.MaxConcurrentAppointments)
+            {
+                throw new GraphQLException(new Error("This slot is not available for booking", "SLOT_UNAVAILABLE"));
+            }
 
             var appointment = new Appointment
             {
-                StartTime = startTime,
-                EndTime = startTime.AddHours(1), // Default 1 hour appointment
-                AppointmentDate = startTime.Date,
+                SlotId = slotId,
                 UserId = userId,
                 ServiceId = serviceId,
                 ProviderId = 1, // This would need to be updated based on the service
@@ -118,6 +127,14 @@ namespace Appointment_System.GraphQL.Mutations
             };
 
             context.Appointments.Add(appointment);
+            
+            // Update slot availability
+            slot.CurrentAppointmentCount++;
+            if (slot.CurrentAppointmentCount >= slot.MaxConcurrentAppointments)
+            {
+                slot.IsAvailable = false;
+            }
+            
             await context.SaveChangesAsync();
             
             return appointment;
