@@ -271,6 +271,7 @@ async Task InitializeAsync(UserManager<ApplicationUser> userManager, RoleManager
             Address = "Admin Office",
             PhoneNumber = "555-ADMIN",
             ProfilePictureUrl = "/images/default-profile.png",
+            // Since BusinessDescription is now nullable, it can be left as null
         };
         
         var result = await userManager.CreateAsync(adminUser, "Admin123$");
