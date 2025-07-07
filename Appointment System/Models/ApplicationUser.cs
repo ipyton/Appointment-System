@@ -19,9 +19,9 @@ namespace Appointment_System.Models
         public string ProfilePictureUrl { get; set; }
         
         // For service providers
-        public string BusinessName { get; set; }
+        public string? BusinessName { get; set; }
         
-        public string BusinessDescription { get; set; }
+        public string? BusinessDescription { get; set; }
 
         
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

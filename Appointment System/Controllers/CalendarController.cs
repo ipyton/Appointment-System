@@ -37,7 +37,7 @@ namespace Appointment_System.Controllers
         [HttpGet("get")]
         public async Task<IActionResult> GetEvents(
             [FromQuery] DateTime? date,
-            [FromQuery] string view = "month"
+            [FromQuery] string type = "month"
         )
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -47,9 +47,9 @@ namespace Appointment_System.Controllers
             date ??= DateTime.Today;
 
             // Normalize view parameter
-            view = view?.ToLower() ?? "month";
+            type = type?.ToLower() ?? "month";
 
-            switch (view)
+            switch (type)
             {
                 case "day":
                     // For day view, get events for the specific day only
@@ -73,7 +73,7 @@ namespace Appointment_System.Controllers
 
             _logger.LogInformation(
                 "Fetching {View} calendar events for user {UserId} from {Start} to {End}",
-                view,
+                type,
                 userId,
                 start,
                 end
@@ -83,7 +83,7 @@ namespace Appointment_System.Controllers
             return Ok(
                 new
                 {
-                    view = view,
+                    type = type,
                     startDate = start,
                     endDate = end,
                     totalEvents = events.Count,

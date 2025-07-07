@@ -55,17 +55,7 @@ namespace Appointment_System.Models
         [StringLength(20)]
         public string ContactPhone { get; set; }
         
-        // Payment information
-        [StringLength(50)]
-        public string PaymentMethod { get; set; }
-        
-        [Column(TypeName = "decimal(18,2)")]
-        public decimal? PaymentAmount { get; set; }
-        
-        [StringLength(3)]
-        public string PaymentCurrency { get; set; }
-        
-        public DateTime? PaymentDate { get; set; }
+
     }
 
     public enum AppointmentStatus

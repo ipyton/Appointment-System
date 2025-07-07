@@ -167,19 +167,7 @@ namespace Appointment_System.Controllers
                 // For now, we'll just update the appointment status
                 appointment.Status = AppointmentStatus.Confirmed;
                 appointment.UpdatedAt = DateTime.UtcNow;
-                
-                // Update payment information
-                appointment.PaymentMethod = paymentDto.PaymentMethod;
-                appointment.PaymentAmount = paymentDto.Amount;
-                appointment.PaymentCurrency = paymentDto.Currency;
-                appointment.PaymentDate = DateTime.UtcNow;
-                
-                // Add special requests if provided
-                if (!string.IsNullOrEmpty(paymentDto.SpecialRequests))
-                {
-                    appointment.SpecialRequests = paymentDto.SpecialRequests;
-                }
-                
+                    
                 // Convert slot date/time to DateTime for calendar event
                 var slot = appointment.Slot;
                 var startDateTime = new DateTime(
@@ -344,9 +332,6 @@ namespace Appointment_System.Controllers
         [Required]
         [StringLength(3)]
         public string Currency { get; set; }
-
-        [StringLength(500)]
-        public string SpecialRequests { get; set; }
 
         public CardDetailsDto CardDetails { get; set; }
     }
