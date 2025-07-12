@@ -5,7 +5,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>Appointment_System</RootNamespace>
-    <UserSecretsId>177dd976-5aba-4a82-baea-89dcb5ce2d5d</UserSecretsId>
+    <UserSecretsId>appoint-ease-secret-id</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>
