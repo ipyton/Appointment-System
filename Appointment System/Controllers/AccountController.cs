@@ -6,6 +6,7 @@ using Microsoft.Extensions.Logging;
 using Appointment_System.Services;
 using System.Linq;
 using Microsoft.AspNetCore.Authorization;
+using System;
 
 namespace Appointment_System.Controllers
 {
@@ -102,67 +103,75 @@ namespace Appointment_System.Controllers
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginModel model)
         {
-            _logger.LogInformation("Login attempt for email: {Email}", model.Email);
-            
-            if (ModelState.IsValid)
+            try
             {
-                var result = await _signInManager.PasswordSignInAsync(
-                    model.Email, 
-                    model.Password, 
-                    model.RememberMe, 
-                    lockoutOnFailure: true);
+                _logger.LogInformation("Login attempt for email: {Email}", model.Email);
                 
-                if (result.Succeeded)
+                if (ModelState.IsValid)
                 {
-                    var user = await _userManager.FindByEmailAsync(model.Email);
-                    var roles = await _userManager.GetRolesAsync(user);
-                    _logger.LogInformation("User logged in successfully: {UserId}", user?.Id);
-                    var token = await _tokenService.GenerateJwtToken(user, model.RememberMe);
-                
-                    await _tokenService.SetToken(token);
-                    return StatusCode(200, new { 
-                        statusCode = 200,
-                        message = "User logged in successfully",
-                        userId = user.Id,
-                        email = user.Email,
-                        fullName = user.FullName,
-                        isServiceProvider = user.IsServiceProvider,
-                        role = roles.FirstOrDefault(),
-                        profilePictureUrl = user.ProfilePictureUrl,
-                        businessName = user.BusinessName,
-                        businessDescription = user.BusinessDescription,
-                        token = token.AccessToken
-                    });
-                }
-                
-                if (result.IsLockedOut)
-                {
-                    _logger.LogWarning("User account locked out: {Email}", model.Email);
-                    return StatusCode(403, new { 
-                        statusCode = 403,
-                        message = "User account locked out"
-                    });
+                    var result = await _signInManager.PasswordSignInAsync(
+                        model.Email, 
+                        model.Password, 
+                        model.RememberMe, 
+                        lockoutOnFailure: true);
+                    
+                    if (result.Succeeded)
+                    {
+                        var user = await _userManager.FindByEmailAsync(model.Email);
+                        var roles = await _userManager.GetRolesAsync(user);
+                        _logger.LogInformation("User logged in successfully: {UserId}", user?.Id);
+                        var token = await _tokenService.GenerateJwtToken(user, model.RememberMe);
+                    
+                        await _tokenService.SetToken(token);
+                        return StatusCode(200, new { 
+                            statusCode = 200,
+                            message = "User logged in successfully",
+                            userId = user.Id,
+                            email = user.Email,
+                            fullName = user.FullName,
+                            isServiceProvider = user.IsServiceProvider,
+                            role = roles.FirstOrDefault(),
+                            profilePictureUrl = user.ProfilePictureUrl,
+                            businessName = user.BusinessName,
+                            businessDescription = user.BusinessDescription,
+                            token = token.AccessToken
+                        });
+                    }
+                    
+                    if (result.IsLockedOut)
+                    {
+                        _logger.LogWarning("User account locked out: {Email}", model.Email);
+                        return StatusCode(403, new { 
+                            statusCode = 403,
+                            message = "User account locked out"
+                        });
+                    }
+                    else
+                    {
+                        _logger.LogWarning("Invalid login attempt for email: {Email}", model.Email);
+                        return StatusCode(401, new { 
+                            statusCode = 401,
+                            message = "Invalid login credentials" 
+                        });
+                    }
                 }
                 else
                 {
-                    _logger.LogWarning("Invalid login attempt for email: {Email}", model.Email);
-                    return StatusCode(401, new { 
-                        statusCode = 401,
-                        message = "Invalid login credentials" 
+                    _logger.LogWarning("Invalid model state during login attempt");
+                    return StatusCode(400, new { 
+                        statusCode = 400,
+                        message = "Invalid input data",
+                        errors = ModelState.ToDictionary(
+                            kvp => kvp.Key,
+                            kvp => kvp.Value.Errors.Select(e => e.ErrorMessage).ToArray()
+                        )
                     });
                 }
             }
-            else
+            catch (Exception ex)
             {
-                _logger.LogWarning("Invalid model state during login attempt");
-                return StatusCode(400, new { 
-                    statusCode = 400,
-                    message = "Invalid input data",
-                    errors = ModelState.ToDictionary(
-                        kvp => kvp.Key,
-                        kvp => kvp.Value.Errors.Select(e => e.ErrorMessage).ToArray()
-                    )
-                });
+                _logger.LogError(ex, "Error during login: {Message}", ex.Message);
+                return StatusCode(500, new { statusCode = 500, message = "Internal server error: " + ex.Message });
             }
         }
         
