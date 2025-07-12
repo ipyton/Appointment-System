@@ -121,11 +121,10 @@ namespace AppointmentSystem.Tests.Controllers
             var dto = new BookAppointmentDto
             {
                 ServiceId = 1,
-                TemplateId = 1,
                 SlotId = 1,
-                DayId = 1,
-                SegmentId = 1,
                 Notes = "Test appointment",
+                ContactEmail = "test@example.com",
+                ContactPhone = "123-456-7890"
             };
 
             // Act
@@ -141,7 +140,7 @@ namespace AppointmentSystem.Tests.Controllers
         }
 
         [Fact]
-        public async Task GetMyAppointments_ReturnsOkResult_WithUserAppointments()
+        public async Task GetAppointmentsByUserId_ReturnsOkResult_WithUserAppointments()
         {
             // Arrange
             var dbContext = DatabaseHelper.GetDatabaseContext();
@@ -151,16 +150,15 @@ namespace AppointmentSystem.Tests.Controllers
             var dto = new BookAppointmentDto
             {
                 ServiceId = 1,
-                TemplateId = 1,
                 SlotId = 1,
-                DayId = 1,
-                SegmentId = 1,
                 Notes = "Test appointment",
+                ContactEmail = "test@example.com",
+                ContactPhone = "123-456-7890"
             };
             await controller.BookAppointment(dto);
 
             // Act
-            var result = await controller.GetMyAppointments();
+            var result = await controller.GetAppointmentsByUserId();
 
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);

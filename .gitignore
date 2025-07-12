@@ -2,6 +2,19 @@
 /Appointment System/obj
 /Appointment System/logs
 /Appointment System/wwwroot/images
+/AppointmentSystem.Tests/bin
+/AppointmentSystem.Tests/obj
+/backup_tests/**/bin
+/backup_tests/**/obj
 .fake
 .VSCodeCounter
 publish
+bin
+obj
+**/bin/
+**/obj/
+**/[Dd]ebug/
+**/[Rr]elease/
+*.dll
+*.exe
+*.pdb
