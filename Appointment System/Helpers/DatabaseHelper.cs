@@ -29,7 +29,9 @@ namespace AppointmentSystem.Tests.Helpers
                 Id = "test-user-id",
                 UserName = "testuser@example.com",
                 Email = "testuser@example.com",
-                FullName = "Test User"
+                FullName = "Test User",
+                Address = "123 Test Street",
+                ProfilePictureUrl = "/images/default.jpg"
             };
             dbContext.Users.Add(user);
 
@@ -41,7 +43,9 @@ namespace AppointmentSystem.Tests.Helpers
                 Email = "provider@example.com",
                 FullName = "Test Provider",
                 PhoneNumber = "1234567890",
-                IsServiceProvider = true
+                IsServiceProvider = true,
+                Address = "456 Provider Avenue",
+                ProfilePictureUrl = "/images/provider.jpg"
             };
             dbContext.Users.Add(provider);
 

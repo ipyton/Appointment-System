@@ -5,6 +5,7 @@ using Appointment_System.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.DependencyInjection;
+using System.Linq;
 
 namespace Appointment_System.Middleware
 {
@@ -12,6 +13,14 @@ namespace Appointment_System.Middleware
     {
         private readonly RequestDelegate _next;
         private readonly ILogger<TokenValidationMiddleware> _logger;
+
+        // List of paths that should be publicly accessible without authentication
+        private readonly string[] _publicPaths = new[] 
+        { 
+            "/search/suggest",  // Allow public access to search/suggest endpoint
+            "/swagger",         // Allow access to Swagger UI
+            "/graphql"          // Allow public access to GraphQL endpoint
+        };
 
         public TokenValidationMiddleware(
             RequestDelegate next,
@@ -23,6 +32,16 @@ namespace Appointment_System.Middleware
 
         public async Task InvokeAsync(HttpContext context)
         {
+            // Check if the current path is in the public paths list
+            string path = context.Request.Path.Value?.ToLowerInvariant();
+            
+            // Skip token validation for public paths
+            if (path != null && _publicPaths.Any(p => path.StartsWith(p, StringComparison.OrdinalIgnoreCase)))
+            {
+                await _next(context);
+                return;
+            }
+            
             try
             {
                 _logger.LogInformation("TokenValidationMiddleware");

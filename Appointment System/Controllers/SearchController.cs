@@ -98,6 +98,7 @@ public async Task<IActionResult> Search(
         /// Get autocomplete suggestions
         /// </summary>
         [HttpGet("suggest")]
+        [AllowAnonymous]
         public async Task<IActionResult> Suggest(
             [FromQuery] string q,
             [FromQuery] bool fuzzy = true,
