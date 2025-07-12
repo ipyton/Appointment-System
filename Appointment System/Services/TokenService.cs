@@ -103,7 +103,14 @@ namespace Appointment_System.Services
                 claims.Add(new Claim(ClaimTypes.Role, role));
             }
 
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]));
+            // Get JWT key from user secrets or fall back to appsettings
+            var jwtKey = _config["Jwt:Key"];
+            if (string.IsNullOrEmpty(jwtKey))
+            {
+                throw new InvalidOperationException("JWT Key is not configured. Use 'dotnet user-secrets set \"Jwt:Key\" \"your-secret-key\"' to configure it.");
+            }
+            
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
             var expires = rememberMe ? DateTime.Now.AddDays(15) : DateTime.Now.AddHours(Convert.ToDouble(_config["Jwt:ExpireHours"]));
 
