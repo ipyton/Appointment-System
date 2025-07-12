@@ -68,53 +68,47 @@ namespace AppointmentSystem.Tests.Services
         }
 
         [Fact]
-        public async Task BookAppointmentAsync_CreatesAppointmentAndBill()
+        public async Task BookAppointmentAsync_CreatesAppointment()
         {
             // Arrange
             var dbContext = DatabaseHelper.GetDatabaseContext();
             var service = new AppointmentClientService(dbContext, _loggerMock.Object);
             var userId = "test-user-id";
             var serviceId = 1;
-            var startTime = DateTime.Now.AddDays(1).Date.AddHours(10);
+            var slotId = 1;
 
             // Act
-            var result = await service.BookAppointmentAsync(userId, serviceId, startTime);
+            var result = await service.BookAppointmentAsync(userId, serviceId, slotId);
 
             // Assert
             Assert.NotNull(result);
             Assert.Equal(userId, result.UserId);
             Assert.Equal(serviceId, result.ServiceId);
-            Assert.Equal(startTime, result.StartTime);
+            Assert.Equal(slotId, result.SlotId);
             Assert.Equal(AppointmentStatus.Pending, result.Status);
-            
-            // Verify bill was created
-            var bill = await dbContext.Bills.FindAsync(result.BillId);
-            Assert.NotNull(bill);
-            Assert.Equal(100.00m, bill.Amount); // From our test data
-            Assert.Equal(BillStatus.Pending, bill.Status);
         }
 
         [Fact]
-        public async Task GetUserAppointmentsAsync_ReturnsUserAppointments()
+        public async Task GetAppointmentDetailsAsync_ReturnsAppointment()
         {
             // Arrange
             var dbContext = DatabaseHelper.GetDatabaseContext();
             var service = new AppointmentClientService(dbContext, _loggerMock.Object);
             var userId = "test-user-id";
             var serviceId = 1;
-            var startTime = DateTime.Now.AddDays(1).Date.AddHours(10);
+            var slotId = 1;
 
             // Create a test appointment
-            await service.BookAppointmentAsync(userId, serviceId, startTime);
+            var appointment = await service.BookAppointmentAsync(userId, serviceId, slotId);
 
             // Act
-            var result = await service.GetUserAppointmentsAsync(userId);
+            var result = await service.GetAppointmentDetailsAsync(appointment.Id);
 
             // Assert
             Assert.NotNull(result);
-            Assert.Single(result);
-            Assert.Equal(userId, result.First().UserId);
-            Assert.Equal(serviceId, result.First().ServiceId);
+            Assert.Equal(appointment.Id, result.Id);
+            Assert.Equal(userId, result.UserId);
+            Assert.Equal(serviceId, result.ServiceId);
         }
     }
 } 
