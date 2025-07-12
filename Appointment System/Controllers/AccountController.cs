@@ -100,6 +100,13 @@ namespace Appointment_System.Controllers
         }
 
         [AllowAnonymous]
+        [HttpGet("login")]
+        public IActionResult GetLogin()
+        {
+            return Ok(new { message = "Please use POST method for login" });
+        }
+
+        [AllowAnonymous]
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginModel model)
         {
@@ -171,7 +178,12 @@ namespace Appointment_System.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error during login: {Message}", ex.Message);
-                return StatusCode(500, new { statusCode = 500, message = "Internal server error: " + ex.Message });
+                return StatusCode(500, new { 
+                    statusCode = 500, 
+                    message = "Internal server error during login", 
+                    error = ex.Message,
+                    stackTrace = ex.StackTrace 
+                });
             }
         }
         
