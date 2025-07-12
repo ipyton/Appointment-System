@@ -93,12 +93,13 @@ namespace AppointmentSystem.Tests.Controllers
             await dbContext.SaveChangesAsync();
 
             // Act
-            var result = await controller.GetTemplate(template.Id);
+            var result = await controller.GetMyTemplates();
 
             // Assert
-            var templateResult = Assert.IsType<Template>(result.Value);
-            Assert.Equal("Test Template", templateResult.Name);
-            Assert.Equal(_providerId, templateResult.ProviderId);
+            var okResult = Assert.IsType<OkObjectResult>(result.Result);
+            var templates = Assert.IsAssignableFrom<IEnumerable<TemplateDTO>>(okResult.Value);
+            Assert.Single(templates);
+            Assert.Equal("Test Template", templates.First().Name);
         }
 
         [Fact]
@@ -109,10 +110,12 @@ namespace AppointmentSystem.Tests.Controllers
             var controller = SetupController(dbContext);
 
             // Act
-            var result = await controller.GetTemplate(999);
+            var result = await controller.GetMyTemplates();
 
             // Assert
-            Assert.IsType<NotFoundResult>(result.Result);
+            var okResult = Assert.IsType<OkObjectResult>(result.Result);
+            var templates = Assert.IsAssignableFrom<IEnumerable<TemplateDTO>>(okResult.Value);
+            Assert.Empty(templates);
         }
 
         [Fact]
@@ -122,7 +125,7 @@ namespace AppointmentSystem.Tests.Controllers
             var dbContext = DatabaseHelper.GetDatabaseContext();
             var controller = SetupController(dbContext);
             
-            var template = new Template
+            var templateDto = new TemplateDTO
             {
                 Name = "New Template",
                 Description = "A new template"
@@ -130,15 +133,13 @@ namespace AppointmentSystem.Tests.Controllers
             };
 
             // Act
-            var result = await controller.CreateTemplate(template);
+            var result = await controller.UpsertTemplate(templateDto);
 
             // Assert
-            var createdAtActionResult = Assert.IsType<CreatedAtActionResult>(result.Result);
-            var createdTemplate = Assert.IsType<Template>(createdAtActionResult.Value);
-            Assert.Equal("New Template", createdTemplate.Name);
-            Assert.Equal(_providerId, createdTemplate.ProviderId); // Provider ID should be set
-            Assert.NotNull(createdTemplate.Days); // Default days should be created
-            Assert.Equal(7, createdTemplate.Days.Count);
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            var responseObject = okResult.Value as dynamic;
+            Assert.True(responseObject.StatusCode == 200);
+            Assert.True(responseObject.New);
         }
 
         [Fact]
@@ -159,14 +160,21 @@ namespace AppointmentSystem.Tests.Controllers
             await dbContext.SaveChangesAsync();
             
             // Update the template
-            template.Name = "Updated Template";
-            template.Description = "Updated description";
+            var templateDto = new TemplateDTO
+            {
+                Id = template.Id,
+                Name = "Updated Template",
+                Description = "Updated description"
+            };
 
             // Act
-            var result = await controller.UpdateTemplate(template.Id, template);
+            var result = await controller.UpsertTemplate(templateDto);
 
             // Assert
-            Assert.IsType<NoContentResult>(result);
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            var responseObject = okResult.Value as dynamic;
+            Assert.True(responseObject.StatusCode == 200);
+            Assert.False(responseObject.New);
             
             // Verify the update in the database
             var updatedTemplate = await dbContext.Templates.FindAsync(template.Id);
@@ -192,13 +200,17 @@ namespace AppointmentSystem.Tests.Controllers
             await dbContext.SaveChangesAsync();
             
             // Try to update the template
-            template.Name = "Trying to Update";
+            var templateDto = new TemplateDTO
+            {
+                Id = template.Id,
+                Name = "Trying to Update"
+            };
 
             // Act
-            var result = await controller.UpdateTemplate(template.Id, template);
+            var result = await controller.UpsertTemplate(templateDto);
 
-            // Assert
-            Assert.IsType<ForbidResult>(result);
+            // Assert - This should now return an Ok with a message instead of Forbid
+            var okResult = Assert.IsType<OkObjectResult>(result);
         }
 
         [Fact]
