@@ -6,6 +6,7 @@ This is a .NET project which is used to support AppointEase Application.
 
 - User authentication and authorization
 - Appointment management
+- Realtime Messaging for providers and receivers.
 - Secure API endpoints
 - Comprehensive logging system
 

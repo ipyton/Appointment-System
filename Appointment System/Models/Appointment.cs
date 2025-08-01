@@ -54,7 +54,6 @@ namespace Appointment_System.Models
         
         [StringLength(20)]
         public string ContactPhone { get; set; }
-        
 
     }
 

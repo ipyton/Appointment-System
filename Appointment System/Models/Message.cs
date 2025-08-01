@@ -9,12 +9,18 @@ namespace Appointment_System.Models
         [Key]
         public int Id { get; set; }
 
+        // [Required]
+        // public int AppointmentId { get; set; }
+
+        // [ForeignKey("AppointmentId")]
+        // public Appointment Appointment { get; set; }
+
         [Required]
-        public int AppointmentId { get; set; }
+        public string ReceiverId { get; set; }
 
-        [ForeignKey("AppointmentId")]
-        public Appointment Appointment { get; set; }
-
+        [ForeignKey("ReceiverId")]
+        public ApplicationUser Receiver { get; set; }
+        
         [Required]
         public string SenderId { get; set; }
 

@@ -91,18 +91,20 @@ namespace Appointment_System.Data
                 .OnDelete(DeleteBehavior.NoAction);
 
             // Configure Message
-            builder
-                .Entity<Message>()
-                .HasOne(m => m.Appointment)
-                .WithMany()
-                .HasForeignKey(m => m.AppointmentId)
-                .OnDelete(DeleteBehavior.NoAction);
+
 
             builder
                 .Entity<Message>()
                 .HasOne(m => m.Sender)
                 .WithMany()
                 .HasForeignKey(m => m.SenderId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            builder
+                .Entity<Message>()
+                .HasOne(m => m.Receiver)
+                .WithMany()
+                .HasForeignKey(m => m.ReceiverId)
                 .OnDelete(DeleteBehavior.Restrict);
 
             builder
@@ -118,6 +120,8 @@ namespace Appointment_System.Data
                 .WithMany()
                 .HasForeignKey(tr => tr.ApplicationUserId)
                 .OnDelete(DeleteBehavior.NoAction);
+
+            
         }
     }
 }
