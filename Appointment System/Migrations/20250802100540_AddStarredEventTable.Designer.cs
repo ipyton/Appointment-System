@@ -4,6 +4,7 @@ using Appointment_System.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Appointment_System.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250802100540_AddStarredEventTable")]
+    partial class AddStarredEventTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -500,7 +503,7 @@ namespace Appointment_System.Migrations
                     b.ToTable("Slots");
                 });
 
-            modelBuilder.Entity("Appointment_System.Models.StarredService", b =>
+            modelBuilder.Entity("Appointment_System.Models.StarredEvent", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -508,24 +511,26 @@ namespace Appointment_System.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<int?>("AppointmentId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("CalendarEventId")
+                        .HasColumnType("int");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<int>("ServiceId")
-                        .HasColumnType("int");
-
                     b.Property<string>("UserId")
                         .IsRequired()
-                        .HasColumnType("nvarchar(450)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ServiceId");
+                    b.HasIndex("AppointmentId");
 
-                    b.HasIndex("UserId", "ServiceId")
-                        .IsUnique();
+                    b.HasIndex("CalendarEventId");
 
-                    b.ToTable("StarredServices");
+                    b.ToTable("StarredEvents");
                 });
 
             modelBuilder.Entity("Appointment_System.Models.Template", b =>
@@ -839,23 +844,21 @@ namespace Appointment_System.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("Appointment_System.Models.StarredService", b =>
+            modelBuilder.Entity("Appointment_System.Models.StarredEvent", b =>
                 {
-                    b.HasOne("Appointment_System.Models.Service", "Service")
+                    b.HasOne("Appointment_System.Models.Appointment", "Appointment")
                         .WithMany()
-                        .HasForeignKey("ServiceId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("AppointmentId")
+                        .OnDelete(DeleteBehavior.NoAction);
 
-                    b.HasOne("Appointment_System.Models.ApplicationUser", "User")
+                    b.HasOne("Appointment_System.Models.CalendarEvent", "CalendarEvent")
                         .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("CalendarEventId")
+                        .OnDelete(DeleteBehavior.NoAction);
 
-                    b.Navigation("Service");
+                    b.Navigation("Appointment");
 
-                    b.Navigation("User");
+                    b.Navigation("CalendarEvent");
                 });
 
             modelBuilder.Entity("Appointment_System.Models.Template", b =>

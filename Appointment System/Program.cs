@@ -8,6 +8,8 @@ using Appointment_System.Hubs;
 using Microsoft.Extensions.Logging;
 using TokenService = Appointment_System.Services.TokenService;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authentication.Google;
+using AspNet.Security.OAuth.GitHub;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Appointment_System.GraphQL.Types;
@@ -122,6 +124,22 @@ builder.Services.AddAuthentication(options =>
             return Task.CompletedTask;
         }
     };
+})
+.AddGoogle(googleOptions =>
+{
+    googleOptions.ClientId = builder.Configuration["Authentication:Google:ClientId"] ?? 
+        throw new InvalidOperationException("Google Client ID is not configured. Use 'dotnet user-secrets set \"Authentication:Google:ClientId\" \"your-client-id\"'");
+    googleOptions.ClientSecret = builder.Configuration["Authentication:Google:ClientSecret"] ?? 
+        throw new InvalidOperationException("Google Client Secret is not configured. Use 'dotnet user-secrets set \"Authentication:Google:ClientSecret\" \"your-client-secret\"'");
+    googleOptions.CallbackPath = "/account/signin-google-callback";
+})
+.AddGitHub(githubOptions =>
+{
+    githubOptions.ClientId = builder.Configuration["Authentication:GitHub:ClientId"] ?? 
+        throw new InvalidOperationException("GitHub Client ID is not configured. Use 'dotnet user-secrets set \"Authentication:GitHub:ClientId\" \"your-client-id\"'");
+    githubOptions.ClientSecret = builder.Configuration["Authentication:GitHub:ClientSecret"] ?? 
+        throw new InvalidOperationException("GitHub Client Secret is not configured. Use 'dotnet user-secrets set \"Authentication:GitHub:ClientSecret\" \"your-client-secret\"'");
+    githubOptions.CallbackPath = "/account/signin-github-callback";
 });
 
 // Add GraphQL services

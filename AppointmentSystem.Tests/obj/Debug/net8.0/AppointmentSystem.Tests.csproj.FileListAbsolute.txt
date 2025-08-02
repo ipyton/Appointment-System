@@ -425,3 +425,5 @@
 /Users/noah/Appointment System/AppointmentSystem.Tests/obj/Debug/net8.0/AppointmentSystem.Tests.pdb
 /Users/noah/Appointment System/AppointmentSystem.Tests/obj/Debug/net8.0/AppointmentSystem.Tests.genruntimeconfig.cache
 /Users/noah/Appointment System/AppointmentSystem.Tests/obj/Debug/net8.0/ref/AppointmentSystem.Tests.dll
+/Users/noah/Appointment System/AppointmentSystem.Tests/bin/Debug/net8.0/AspNet.Security.OAuth.GitHub.dll
+/Users/noah/Appointment System/AppointmentSystem.Tests/bin/Debug/net8.0/Microsoft.AspNetCore.Authentication.Google.dll

@@ -55,6 +55,7 @@ namespace Appointment_System.Models
         [StringLength(20)]
         public string ContactPhone { get; set; }
 
+        public bool IsStarred { get; set; } = false;
     }
 
     public enum AppointmentStatus

@@ -226,10 +226,4 @@ namespace Appointment_System.Controllers
         [Range(1, 7)]
         public int RepeatInterval { get; set; } = 1;
     }
-
-    public class UpdateStatusDto
-    {
-        [Required]
-        public AppointmentStatus Status { get; set; }
-    }
 }

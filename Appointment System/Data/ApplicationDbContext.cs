@@ -21,6 +21,7 @@ namespace Appointment_System.Data
         public DbSet<Segment> Segments { get; set; }
         public DbSet<Slot> Slots { get; set; }
         public DbSet<CalendarEvent> CalendarEvents { get; set; }
+        public DbSet<StarredService> StarredServices { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -121,7 +122,26 @@ namespace Appointment_System.Data
                 .HasForeignKey(tr => tr.ApplicationUserId)
                 .OnDelete(DeleteBehavior.NoAction);
 
+            // Configure StarredService relationships
+            builder
+                .Entity<StarredService>()
+                .HasOne(ss => ss.User)
+                .WithMany()
+                .HasForeignKey(ss => ss.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            builder
+                .Entity<StarredService>()
+                .HasOne(ss => ss.Service)
+                .WithMany()
+                .HasForeignKey(ss => ss.ServiceId)
+                .OnDelete(DeleteBehavior.Cascade);
             
+            // Add a unique constraint to prevent duplicate stars
+            builder
+                .Entity<StarredService>()
+                .HasIndex(ss => new { ss.UserId, ss.ServiceId })
+                .IsUnique();
         }
     }
 }

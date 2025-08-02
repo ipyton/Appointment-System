@@ -29,11 +29,11 @@ namespace Appointment_System.Controllers
         }
 
         /// <summary>
-        /// Get calendar events based on different view types: day, week, or month
+        /// Get calendar events by type (day, week, month)
         /// </summary>
-        /// <param name="date">Reference date for the view (defaults to today if not specified)</param>
-        /// <param name="view">View type: "day", "week", or "month" (defaults to "month")</param>
-        /// <returns>List of calendar events for the specified time period</returns>
+        /// <param name="date">Reference date (defaults to today)</param>
+        /// <param name="type">View type: day, week, month (defaults to month)</param>
+        /// <returns>List of calendar events for the specified view</returns>
         [HttpGet("get")]
         public async Task<IActionResult> GetEvents(
             [FromQuery] DateTime? date,

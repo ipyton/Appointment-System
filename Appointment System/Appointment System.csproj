@@ -9,6 +9,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="AspNet.Security.OAuth.GitHub" Version="8.0.0" />
     <PackageReference Include="Azure.Identity" Version="1.14.1" />
     <PackageReference Include="Azure.Search.Documents" Version="11.5.1" />
     <PackageReference Include="HotChocolate.Abstractions" Version="15.1.7" />
@@ -19,6 +20,7 @@
     <PackageReference Include="HotChocolate.Types" Version="15.1.7" />
     <PackageReference Include="HotChocolate.Types.Analyzers" Version="15.1.7" />
     <PackageReference Include="HotChocolate.Types.Scalars" Version="15.1.7" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.Google" Version="8.0.0" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.0" />
     <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="8.0.17" />
     <PackageReference Include="Microsoft.AspNetCore.Identity.UI" Version="8.0.17" />

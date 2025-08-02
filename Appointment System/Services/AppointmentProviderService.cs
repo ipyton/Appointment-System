@@ -192,5 +192,123 @@ namespace Appointment_System.Services
                 
             return appointment;
         }
+
+        /// <summary>
+        /// Toggle star status for an appointment
+        /// </summary>
+        public async Task<Appointment> ToggleAppointmentStarAsync(int appointmentId, string providerId, bool isStarred)
+        {
+            var appointment = await _context.Appointments
+                .Include(a => a.Slot)
+                .FirstOrDefaultAsync(a => a.Id == appointmentId);
+
+            if (appointment == null)
+                throw new ArgumentException($"Appointment with ID {appointmentId} not found");
+
+            if (appointment.ProviderId.ToString() != providerId)
+                throw new UnauthorizedAccessException("You are not authorized to star this appointment");
+
+            appointment.IsStarred = isStarred;
+            appointment.UpdatedAt = DateTime.UtcNow;
+
+            await _context.SaveChangesAsync();
+            
+            _logger.LogInformation("Appointment star status updated: {AppointmentId} to {IsStarred} by provider {ProviderId}", 
+                appointmentId, isStarred, providerId);
+                
+            return appointment;
+        }
+
+        /// <summary>
+        /// Get provider's starred appointments
+        /// </summary>
+        public async Task<List<Appointment>> GetStarredAppointmentsAsync(string providerId, DateTime? startDate = null, DateTime? endDate = null)
+        {
+            var query = _context.Appointments
+                .Include(a => a.Slot)
+                .Where(a => a.ProviderId.ToString() == providerId && a.IsStarred);
+
+            if (startDate.HasValue)
+                query = query.Where(a => a.Slot.Date >= DateOnly.FromDateTime(startDate.Value));
+
+            if (endDate.HasValue)
+                query = query.Where(a => a.Slot.Date <= DateOnly.FromDateTime(endDate.Value));
+
+            return await query
+                .OrderBy(a => a.Slot.Date)
+                .ThenBy(a => a.Slot.StartTime)
+                .ToListAsync();
+        }
+
+        /// <summary>
+        /// Star a service for a user
+        /// </summary>
+        public async Task<StarredService> StarServiceAsync(int serviceId, string userId)
+        {
+            // Check if service exists
+            var service = await _context.Services.FindAsync(serviceId);
+            if (service == null)
+                throw new ArgumentException($"Service with ID {serviceId} not found");
+            
+            // Check if already starred
+            var existingStar = await _context.StarredServices
+                .FirstOrDefaultAsync(ss => ss.ServiceId == serviceId && ss.UserId == userId);
+            
+            if (existingStar != null)
+                return existingStar; // Already starred
+            
+            // Create new star
+            var starredService = new StarredService
+            {
+                ServiceId = serviceId,
+                UserId = userId,
+                CreatedAt = DateTime.UtcNow
+            };
+            
+            _context.StarredServices.Add(starredService);
+            await _context.SaveChangesAsync();
+            
+            _logger.LogInformation("Service starred: {ServiceId} by user {UserId}", serviceId, userId);
+            return starredService;
+        }
+        
+        /// <summary>
+        /// Unstar a service for a user
+        /// </summary>
+        public async Task<bool> UnstarServiceAsync(int serviceId, string userId)
+        {
+            var starredService = await _context.StarredServices
+                .FirstOrDefaultAsync(ss => ss.ServiceId == serviceId && ss.UserId == userId);
+            
+            if (starredService == null)
+                return false; // Not starred, nothing to do
+            
+            _context.StarredServices.Remove(starredService);
+            await _context.SaveChangesAsync();
+            
+            _logger.LogInformation("Service unstarred: {ServiceId} by user {UserId}", serviceId, userId);
+            return true;
+        }
+        
+        /// <summary>
+        /// Get all starred services for a user
+        /// </summary>
+        public async Task<List<Service>> GetStarredServicesAsync(string userId)
+        {
+            return await _context.StarredServices
+                .Where(ss => ss.UserId == userId)
+                .Include(ss => ss.Service)
+                .Select(ss => ss.Service)
+                .ToListAsync();
+        }
+        
+        /// <summary>
+        /// Check if a service is starred by a user
+        /// </summary>
+        public async Task<bool> IsServiceStarredAsync(int serviceId, string userId)
+        {
+            return await _context.StarredServices
+                .AnyAsync(ss => ss.ServiceId == serviceId && ss.UserId == userId);
+        }
     }
 }

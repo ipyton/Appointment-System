@@ -13,5 +13,9 @@ namespace Appointment_System.Models
         public string Password { get; set; } = string.Empty;
 
         public bool RememberMe { get; set; }
+        
+        [Required]
+        [RegularExpression("^(ServiceProvider|User)$", ErrorMessage = "Role must be either 'ServiceProvider' or 'User'")]
+        public string Role { get; set; } = "User";
     }
 }

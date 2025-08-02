@@ -1,9 +1,10 @@
 {
   "version": 2,
-  "dgSpecHash": "bo/wng+wB+k=",
+  "dgSpecHash": "Sovuhf8ePP4=",
   "success": true,
   "projectFilePath": "/Users/noah/Appointment System/AppointmentSystem.Tests/AppointmentSystem.Tests.csproj",
   "expectedPackageFiles": [
+    "/Users/noah/.nuget/packages/aspnet.security.oauth.github/8.0.0/aspnet.security.oauth.github.8.0.0.nupkg.sha512",
     "/Users/noah/.nuget/packages/azure.core/1.46.1/azure.core.1.46.1.nupkg.sha512",
     "/Users/noah/.nuget/packages/azure.identity/1.14.1/azure.identity.1.14.1.nupkg.sha512",
     "/Users/noah/.nuget/packages/azure.search.documents/11.5.1/azure.search.documents.11.5.1.nupkg.sha512",
@@ -102,6 +103,7 @@
     "/Users/noah/.nuget/packages/humanizer.core.zh-hans/2.14.1/humanizer.core.zh-hans.2.14.1.nupkg.sha512",
     "/Users/noah/.nuget/packages/humanizer.core.zh-hant/2.14.1/humanizer.core.zh-hant.2.14.1.nupkg.sha512",
     "/Users/noah/.nuget/packages/microsoft.aspnetcore.authentication.abstractions/2.3.0/microsoft.aspnetcore.authentication.abstractions.2.3.0.nupkg.sha512",
+    "/Users/noah/.nuget/packages/microsoft.aspnetcore.authentication.google/8.0.0/microsoft.aspnetcore.authentication.google.8.0.0.nupkg.sha512",
     "/Users/noah/.nuget/packages/microsoft.aspnetcore.authentication.jwtbearer/8.0.0/microsoft.aspnetcore.authentication.jwtbearer.8.0.0.nupkg.sha512",
     "/Users/noah/.nuget/packages/microsoft.aspnetcore.authorization/2.3.0/microsoft.aspnetcore.authorization.2.3.0.nupkg.sha512",
     "/Users/noah/.nuget/packages/microsoft.aspnetcore.authorization.policy/2.3.0/microsoft.aspnetcore.authorization.policy.2.3.0.nupkg.sha512",
