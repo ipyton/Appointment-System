@@ -18,8 +18,35 @@ using Appointment_System.GraphQL.Mutations;
 using Appointment_System.GraphQL.Authorization;
 using Microsoft.Extensions.Azure;
 using Azure.Messaging.ServiceBus;
+using Azure.Identity;
+using Azure.Security.KeyVault.Secrets;
+using Azure.Extensions.AspNetCore.Configuration.Secrets;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Add configuration sources
+builder.Configuration
+    .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+    .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true, reloadOnChange: true)
+    .AddEnvironmentVariables();
+
+// Add User Secrets in Development
+if (builder.Environment.IsDevelopment())
+{
+    builder.Configuration.AddUserSecrets<Program>();
+}
+// Add Azure Key Vault in Production
+else if (builder.Environment.IsProduction())
+{
+    var keyVaultName = builder.Configuration["KeyVault:Name"];
+    var keyVaultUri = $"https://{keyVaultName}.vault.azure.net/";
+    
+    // Use DefaultAzureCredential which supports multiple authentication methods
+    var credential = new DefaultAzureCredential();
+    var client = new SecretClient(new Uri(keyVaultUri), credential);
+    
+    builder.Configuration.AddAzureKeyVault(client, new KeyVaultSecretManager());
+}
 
 // Load environment variables from configuration in development
 if (builder.Environment.IsDevelopment())
@@ -56,14 +83,22 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 builder.Services.AddAzureClients(azureClientBuilder =>
 {
     // Add Service Bus client if connection string is provided
-    if (!string.IsNullOrEmpty(builder.Configuration["ServiceBus:ConnectionString"]))
+    var serviceBusConnectionString = builder.Configuration["ServiceBus:ConnectionString"];
+    
+    if (!string.IsNullOrEmpty(serviceBusConnectionString))
     {
-        azureClientBuilder.AddServiceBusClient(builder.Configuration["ServiceBus:ConnectionString"]);
+        azureClientBuilder.AddServiceBusClient(serviceBusConnectionString);
+        builder.Services.AddScoped<IServiceBusService, ServiceBusService>();
+        builder.Services.AddHostedService<ServiceBusConsumer>();
     }
     else
     {
         // Log a warning if no connection string is provided
-        var logger = builder.Services.BuildServiceProvider().GetRequiredService<ILogger<Program>>();
+        var logger = LoggerFactory.Create(config => 
+        {
+            config.AddConsole();
+        }).CreateLogger<Program>();
+        
         logger.LogWarning("No Azure Service Bus connection string provided. Service Bus features will not be available.");
     }
 });
@@ -78,8 +113,8 @@ builder.Services.AddScoped<AppointmentProviderService>();
 builder.Services.AddScoped<TemplateService>();
 builder.Services.AddScoped<CalendarService>();
 builder.Services.AddScoped<IMessageService, MessageService>();
-builder.Services.AddScoped<IServiceBusService, ServiceBusService>();
-builder.Services.AddHostedService<ServiceBusConsumer>();
+// builder.Services.AddScoped<IServiceBusService, ServiceBusService>(); // This line is now handled by AddAzureClients
+// builder.Services.AddHostedService<ServiceBusConsumer>(); // This line is now handled by AddAzureClients
 builder.Services.AddHttpContextAccessor();
 
 // Register background services
