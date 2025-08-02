@@ -48,7 +48,7 @@ namespace Appointment_System.Controllers
                 var messages = await _messageService.GetConversationAsync(currentUserId, userId);
                 return Ok(messages);
             }
-            catch (KeyNotFoundException ex)
+            catch (System.Collections.Generic.KeyNotFoundException ex)
             {
                 return NotFound(ex.Message);
             }
@@ -103,7 +103,7 @@ namespace Appointment_System.Controllers
             {
                 return BadRequest(ex.Message);
             }
-            catch (KeyNotFoundException ex)
+            catch (System.Collections.Generic.KeyNotFoundException ex)
             {
                 return NotFound(ex.Message);
             }
@@ -142,7 +142,7 @@ namespace Appointment_System.Controllers
             {
                 return BadRequest(ex.Message);
             }
-            catch (KeyNotFoundException ex)
+            catch (System.Collections.Generic.KeyNotFoundException ex)
             {
                 return NotFound(ex.Message);
             }
@@ -168,7 +168,7 @@ namespace Appointment_System.Controllers
                 var message = await _messageService.MarkMessageAsReadAsync(messageId, currentUserId);
                 return Ok(message);
             }
-            catch (KeyNotFoundException ex)
+            catch (System.Collections.Generic.KeyNotFoundException ex)
             {
                 return NotFound(ex.Message);
             }
@@ -239,7 +239,7 @@ namespace Appointment_System.Controllers
                 var messages = await _messageService.GetMessagesByUsersAsync(currentUserId, senderId, receiverId);
                 return Ok(messages);
             }
-            catch (KeyNotFoundException ex)
+            catch (System.Collections.Generic.KeyNotFoundException ex)
             {
                 return NotFound(ex.Message);
             }

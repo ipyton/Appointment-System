@@ -43,7 +43,7 @@ namespace Appointment_System.Services
             var otherUser = await _context.Users.FindAsync(otherUserId);
             if (otherUser == null)
             {
-                throw new KeyNotFoundException($"User with ID {otherUserId} not found");
+                throw new System.Collections.Generic.KeyNotFoundException($"User with ID {otherUserId} not found");
             }
 
             // Get messages between these two users (in both directions)
@@ -81,7 +81,7 @@ namespace Appointment_System.Services
             var receiver = await _context.Users.FindAsync(receiverId);
             if (receiver == null)
             {
-                throw new KeyNotFoundException($"Recipient user with ID {receiverId} not found");
+                throw new System.Collections.Generic.KeyNotFoundException($"Recipient user with ID {receiverId} not found");
             }
 
             // Create a group name for these two users (alphabetically ordered for consistency)
@@ -125,7 +125,7 @@ namespace Appointment_System.Services
 
             if (message == null)
             {
-                throw new KeyNotFoundException($"Message with ID {messageId} not found");
+                throw new System.Collections.Generic.KeyNotFoundException($"Message with ID {messageId} not found");
             }
 
             // Check if user is the receiver of this message
@@ -219,13 +219,13 @@ namespace Appointment_System.Services
             var sender = await _context.Users.FindAsync(senderId);
             if (sender == null)
             {
-                throw new KeyNotFoundException($"Sender with ID {senderId} not found");
+                throw new System.Collections.Generic.KeyNotFoundException($"Sender with ID {senderId} not found");
             }
             
             var receiver = await _context.Users.FindAsync(receiverId);
             if (receiver == null)
             {
-                throw new KeyNotFoundException($"Receiver with ID {receiverId} not found");
+                throw new System.Collections.Generic.KeyNotFoundException($"Receiver with ID {receiverId} not found");
             }
 
             // For security, ensure current user is either the sender or receiver
