@@ -20,13 +20,16 @@ namespace Appointment_System.Controllers
     public class MessagesController : ControllerBase
     {
         private readonly IMessageService _messageService;
+        private readonly IServiceBusService _serviceBusService;
         private readonly ILogger<MessagesController> _logger;
 
         public MessagesController(
             IMessageService messageService,
+            IServiceBusService serviceBusService,
             ILogger<MessagesController> logger)
         {
             _messageService = messageService;
+            _serviceBusService = serviceBusService;
             _logger = logger;
         }
 
@@ -82,7 +85,7 @@ namespace Appointment_System.Controllers
         /// <param name="receiverId">The recipient user ID</param>
         /// <param name="messageContent">Message content</param>
         /// <returns>The created message</returns>
-        [HttpPost("send/{receiverId}")]
+        [HttpPost("send")]
         public async Task<ActionResult<Message>> SendMessage(string receiverId, [FromBody] string messageContent)
         {
             try
@@ -90,6 +93,10 @@ namespace Appointment_System.Controllers
                 // Get current user ID
                 var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
                 var newMessage = await _messageService.SendMessageAsync(currentUserId, receiverId, messageContent);
+                
+                // Also publish to Service Bus
+                await _serviceBusService.SendMessageAsync(newMessage);
+                
                 return Ok(newMessage);
             }
             catch (ArgumentException ex)
@@ -103,6 +110,45 @@ namespace Appointment_System.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error sending message to user {ReceiverId}", receiverId);
+                return StatusCode(500, "An error occurred while sending the message");
+            }
+        }
+
+        /// <summary>
+        /// Sends a new message using a JSON payload that includes recipient and message content
+        /// </summary>
+        /// <param name="messageDto">Message data transfer object</param>
+        /// <returns>The created message</returns>
+        [HttpPost]
+        public async Task<ActionResult<Message>> SendMessageJson([FromBody] MessageDto messageDto)
+        {
+            try
+            {
+                if (messageDto == null)
+                {
+                    return BadRequest("Message data is required");
+                }
+                
+                // Get current user ID
+                var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                var newMessage = await _messageService.SendMessageAsync(currentUserId, messageDto.ReceiverId, messageDto.Content);
+                
+                // Also publish to Service Bus
+                await _serviceBusService.SendMessageAsync(newMessage);
+                
+                return Ok(newMessage);
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error sending message to user {ReceiverId}", messageDto.ReceiverId);
                 return StatusCode(500, "An error occurred while sending the message");
             }
         }

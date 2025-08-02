@@ -16,6 +16,8 @@ using Appointment_System.GraphQL.Types;
 using Appointment_System.GraphQL.Queries;
 using Appointment_System.GraphQL.Mutations;
 using Appointment_System.GraphQL.Authorization;
+using Microsoft.Extensions.Azure;
+using Azure.Messaging.ServiceBus;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -50,6 +52,22 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(connectionString));
 
+// Register Azure clients
+builder.Services.AddAzureClients(azureClientBuilder =>
+{
+    // Add Service Bus client if connection string is provided
+    if (!string.IsNullOrEmpty(builder.Configuration["ServiceBus:ConnectionString"]))
+    {
+        azureClientBuilder.AddServiceBusClient(builder.Configuration["ServiceBus:ConnectionString"]);
+    }
+    else
+    {
+        // Log a warning if no connection string is provided
+        var logger = builder.Services.BuildServiceProvider().GetRequiredService<ILogger<Program>>();
+        logger.LogWarning("No Azure Service Bus connection string provided. Service Bus features will not be available.");
+    }
+});
+
 // Register the Services
 builder.Services.AddScoped<DatabaseLoggerService>();
 builder.Services.AddScoped<TokenService>();
@@ -60,6 +78,8 @@ builder.Services.AddScoped<AppointmentProviderService>();
 builder.Services.AddScoped<TemplateService>();
 builder.Services.AddScoped<CalendarService>();
 builder.Services.AddScoped<IMessageService, MessageService>();
+builder.Services.AddScoped<IServiceBusService, ServiceBusService>();
+builder.Services.AddHostedService<ServiceBusConsumer>();
 builder.Services.AddHttpContextAccessor();
 
 // Register background services
