@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Appointment_System.Data;
 using Appointment_System.Models;
 using Appointment_System.Hubs;
+using Appointment_System.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -18,17 +19,14 @@ namespace Appointment_System.Controllers
     [Authorize]
     public class MessagesController : ControllerBase
     {
-        private readonly ApplicationDbContext _context;
-        private readonly IHubContext<ChatHub> _hubContext;
+        private readonly IMessageService _messageService;
         private readonly ILogger<MessagesController> _logger;
 
         public MessagesController(
-            ApplicationDbContext context,
-            IHubContext<ChatHub> hubContext,
+            IMessageService messageService,
             ILogger<MessagesController> logger)
         {
-            _context = context;
-            _hubContext = hubContext;
+            _messageService = messageService;
             _logger = logger;
         }
 
@@ -42,26 +40,14 @@ namespace Appointment_System.Controllers
         {
             try
             {
-                // Check if user exists
-                var otherUser = await _context.Users.FindAsync(userId);
-                if (otherUser == null)
-                {
-                    return NotFound("User not found");
-                }
-
                 // Get current user ID
                 var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-
-                // Get messages between these two users (in both directions)
-                var messages = await _context.Messages
-                    .Where(m => (m.SenderId == currentUserId && m.ReceiverId == userId) || 
-                                (m.SenderId == userId && m.ReceiverId == currentUserId))
-                    .OrderByDescending(m => m.CreatedAt)
-                    .Include(m => m.Sender)
-                    .Include(m => m.Receiver)
-                    .ToListAsync();
-
+                var messages = await _messageService.GetConversationAsync(currentUserId, userId);
                 return Ok(messages);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(ex.Message);
             }
             catch (Exception ex)
             {
@@ -80,14 +66,7 @@ namespace Appointment_System.Controllers
             try
             {
                 var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-
-                // Get unread messages where current user is the receiver
-                var unreadMessages = await _context.Messages
-                    .Where(m => m.ReceiverId == currentUserId && !m.IsRead)
-                    .OrderByDescending(m => m.CreatedAt)
-                    .Include(m => m.Sender)
-                    .ToListAsync();
-
+                var unreadMessages = await _messageService.GetUnreadMessagesAsync(currentUserId);
                 return Ok(unreadMessages);
             }
             catch (Exception ex)
@@ -108,52 +87,18 @@ namespace Appointment_System.Controllers
         {
             try
             {
-                if (string.IsNullOrEmpty(messageContent))
-                {
-                    return BadRequest("Message content cannot be empty");
-                }
-
-                // Check if receiver exists
-                var receiver = await _context.Users.FindAsync(receiverId);
-                if (receiver == null)
-                {
-                    return NotFound("Recipient user not found");
-                }
-
                 // Get current user ID
                 var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-
-                // Create a group name for these two users (alphabetically ordered for consistency)
-                string groupName = currentUserId.CompareTo(receiverId) < 0 
-                    ? $"chat-{currentUserId}-{receiverId}" 
-                    : $"chat-{receiverId}-{currentUserId}";
-
-                // Create new message
-                var newMessage = new Message
-                {
-                    SenderId = currentUserId,
-                    ReceiverId = receiverId,
-                    Content = messageContent,
-                    CreatedAt = DateTime.UtcNow,
-                    IsRead = false,
-                    GroupName = groupName
-                };
-
-                // Add to database
-                _context.Messages.Add(newMessage);
-                await _context.SaveChangesAsync();
-
-                // Load the sender data for the response
-                await _context.Entry(newMessage)
-                    .Reference(m => m.Sender)
-                    .LoadAsync();
-
-                // Send to SignalR hub
-                await _hubContext.Clients
-                    .Group(groupName)
-                    .SendAsync("ReceiveMessage", newMessage);
-
+                var newMessage = await _messageService.SendMessageAsync(currentUserId, receiverId, messageContent);
                 return Ok(newMessage);
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(ex.Message);
             }
             catch (Exception ex)
             {
@@ -172,39 +117,18 @@ namespace Appointment_System.Controllers
         {
             try
             {
-                // Find message
-                var message = await _context.Messages
-                    .FirstOrDefaultAsync(m => m.Id == messageId);
-
-                if (message == null)
-                {
-                    return NotFound("Message not found");
-                }
-
                 // Get current user ID
                 var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-
-                // Check if user is the receiver of this message
-                if (message.ReceiverId != currentUserId)
-                {
-                    return Forbid("You don't have access to this message");
-                }
-
-                // Mark as read if not already read
-                if (!message.IsRead)
-                {
-                    message.IsRead = true;
-                    message.ReadAt = DateTime.UtcNow;
-                    
-                    await _context.SaveChangesAsync();
-                    
-                    // Notify via SignalR that message was read
-                    await _hubContext.Clients
-                        .Group(message.GroupName)
-                        .SendAsync("MessageRead", messageId, currentUserId);
-                }
-
+                var message = await _messageService.MarkMessageAsReadAsync(messageId, currentUserId);
                 return Ok(message);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(ex.Message);
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return Forbid();
             }
             catch (Exception ex)
             {
@@ -224,16 +148,7 @@ namespace Appointment_System.Controllers
             try
             {
                 var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-
-                // Get the most recent messages where current user is sender or receiver
-                var recentMessages = await _context.Messages
-                    .Where(m => m.SenderId == currentUserId || m.ReceiverId == currentUserId)
-                    .OrderByDescending(m => m.CreatedAt)
-                    .Take(count)
-                    .Include(m => m.Sender)
-                    .Include(m => m.Receiver)
-                    .ToListAsync();
-
+                var recentMessages = await _messageService.GetRecentMessagesAsync(currentUserId, count);
                 return Ok(recentMessages);
             }
             catch (Exception ex)
@@ -253,51 +168,8 @@ namespace Appointment_System.Controllers
             try
             {
                 var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-
-                // Get users with whom the current user has exchanged messages
-                var conversationPartners = await _context.Messages
-                    .Where(m => m.SenderId == currentUserId || m.ReceiverId == currentUserId)
-                    .Select(m => m.SenderId == currentUserId ? m.ReceiverId : m.SenderId)
-                    .Distinct()
-                    .ToListAsync();
-
-                var conversations = new List<object>();
-
-                foreach (var partnerId in conversationPartners)
-                {
-                    // Skip if somehow the user is matched with themselves
-                    if (partnerId == currentUserId) continue;
-
-                    // Get user info
-                    var partner = await _context.Users.FindAsync(partnerId);
-                    if (partner == null) continue;
-
-                    // Get latest message
-                    var latestMessage = await _context.Messages
-                        .Where(m => (m.SenderId == currentUserId && m.ReceiverId == partnerId) || 
-                                   (m.SenderId == partnerId && m.ReceiverId == currentUserId))
-                        .OrderByDescending(m => m.CreatedAt)
-                        .FirstOrDefaultAsync();
-
-                    // Count unread messages
-                    var unreadCount = await _context.Messages
-                        .CountAsync(m => m.SenderId == partnerId && 
-                                        m.ReceiverId == currentUserId && 
-                                        !m.IsRead);
-
-                    // Add to results
-                    conversations.Add(new
-                    {
-                        UserId = partnerId,
-                        Name = partner.FullName,
-                        LatestMessage = latestMessage?.Content,
-                        LatestMessageTime = latestMessage?.CreatedAt,
-                        UnreadCount = unreadCount
-                    });
-                }
-
-                // Sort by latest message time
-                return Ok(conversations.OrderByDescending(c => ((DateTime?)c.GetType().GetProperty("LatestMessageTime").GetValue(c)) ?? DateTime.MinValue));
+                var conversations = await _messageService.GetConversationsAsync(currentUserId);
+                return Ok(conversations);
             }
             catch (Exception ex)
             {
@@ -317,37 +189,17 @@ namespace Appointment_System.Controllers
         {
             try
             {
-                // Check if users exist
-                var sender = await _context.Users.FindAsync(senderId);
-                if (sender == null)
-                {
-                    return NotFound($"Sender with ID {senderId} not found");
-                }
-                
-                var receiver = await _context.Users.FindAsync(receiverId);
-                if (receiver == null)
-                {
-                    return NotFound($"Receiver with ID {receiverId} not found");
-                }
-
-                // Get current user ID for authorization
                 var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-
-                // For security, ensure current user is either the sender or receiver
-                if (currentUserId != senderId && currentUserId != receiverId)
-                {
-                    return Forbid("You can only view messages where you are either the sender or receiver");
-                }
-
-                // Get messages with the specified sender and receiver
-                var messages = await _context.Messages
-                    .Where(m => m.SenderId == senderId && m.ReceiverId == receiverId)
-                    .OrderByDescending(m => m.CreatedAt)
-                    .Include(m => m.Sender)
-                    .Include(m => m.Receiver)
-                    .ToListAsync();
-
+                var messages = await _messageService.GetMessagesByUsersAsync(currentUserId, senderId, receiverId);
                 return Ok(messages);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(ex.Message);
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return Forbid("You can only view messages where you are either the sender or receiver");
             }
             catch (Exception ex)
             {

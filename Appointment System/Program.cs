@@ -59,6 +59,7 @@ builder.Services.AddScoped<AppointmentClientService>();
 builder.Services.AddScoped<AppointmentProviderService>();
 builder.Services.AddScoped<TemplateService>();
 builder.Services.AddScoped<CalendarService>();
+builder.Services.AddScoped<IMessageService, MessageService>();
 builder.Services.AddHttpContextAccessor();
 
 // Register background services
