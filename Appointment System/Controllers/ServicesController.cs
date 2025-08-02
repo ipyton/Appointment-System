@@ -22,16 +22,19 @@ namespace Appointment_System.Controllers
         private readonly ApplicationDbContext _context;
         private readonly ILogger<ServicesController> _logger;
         private readonly SearchIndexingEventHandler _searchIndexingHandler;
+        private readonly AppointmentProviderService _providerService;
 
         public ServicesController(
             ApplicationDbContext context,
             ILogger<ServicesController> logger,
-            SearchIndexingEventHandler searchIndexingHandler
+            SearchIndexingEventHandler searchIndexingHandler,
+            AppointmentProviderService providerService
         )
         {
             _context = context;
             _logger = logger;
             _searchIndexingHandler = searchIndexingHandler;
+            _providerService = providerService;
         }
 
         [HttpGet]
@@ -477,6 +480,78 @@ namespace Appointment_System.Controllers
                 .ToListAsync();
 
             return Ok(services);
+        }
+
+        [HttpPost("{id}/star")]
+        public async Task<IActionResult> StarService(int id)
+        {
+            try
+            {
+                var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                var starredService = await _providerService.StarServiceAsync(id, userId);
+                return Created($"/services/{id}/star", new { message = "Service starred successfully" });
+            }
+            catch (ArgumentException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error starring service");
+                return StatusCode(500, new { message = "An error occurred while starring the service" });
+            }
+        }
+
+        [HttpDelete("{id}/star")]
+        public async Task<IActionResult> UnstarService(int id)
+        {
+            try
+            {
+                var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                var success = await _providerService.UnstarServiceAsync(id, userId);
+                
+                if (!success)
+                    return NotFound(new { message = "Service star not found" });
+                
+                return NoContent();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error unstarring service");
+                return StatusCode(500, new { message = "An error occurred while unstarring the service" });
+            }
+        }
+
+        [HttpGet("starred")]
+        public async Task<IActionResult> GetStarredServices()
+        {
+            try
+            {
+                var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                var starredServices = await _providerService.GetStarredServicesAsync(userId);
+                return Ok(starredServices);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving starred services");
+                return StatusCode(500, new { message = "An error occurred while retrieving starred services" });
+            }
+        }
+
+        [HttpGet("{id}/is-starred")]
+        public async Task<IActionResult> IsServiceStarred(int id)
+        {
+            try
+            {
+                var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                var isStarred = await _providerService.IsServiceStarredAsync(id, userId);
+                return Ok(new { isStarred });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error checking if service is starred");
+                return StatusCode(500, new { message = "An error occurred while checking if the service is starred" });
+            }
         }
 
         private bool ServiceExists(int id)

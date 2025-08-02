@@ -294,78 +294,6 @@ namespace Appointment_System.Controllers
                 return StatusCode(500, new { message = "An error occurred while updating appointment status" });
             }
         }
-
-        [HttpPost("services/{id}/star")]
-        public async Task<IActionResult> StarService(int id)
-        {
-            try
-            {
-                var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-                var starredService = await _providerService.StarServiceAsync(id, userId);
-                return Created($"/api/events/services/{id}/star", new { message = "Service starred successfully" });
-            }
-            catch (ArgumentException ex)
-            {
-                return NotFound(new { message = ex.Message });
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error starring service");
-                return StatusCode(500, new { message = "An error occurred while starring the service" });
-            }
-        }
-
-        [HttpDelete("services/{id}/star")]
-        public async Task<IActionResult> UnstarService(int id)
-        {
-            try
-            {
-                var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-                var success = await _providerService.UnstarServiceAsync(id, userId);
-                
-                if (!success)
-                    return NotFound(new { message = "Service star not found" });
-                
-                return NoContent();
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error unstarring service");
-                return StatusCode(500, new { message = "An error occurred while unstarring the service" });
-            }
-        }
-
-        [HttpGet("services/starred")]
-        public async Task<IActionResult> GetStarredServices()
-        {
-            try
-            {
-                var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-                var starredServices = await _providerService.GetStarredServicesAsync(userId);
-                return Ok(starredServices);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error retrieving starred services");
-                return StatusCode(500, new { message = "An error occurred while retrieving starred services" });
-            }
-        }
-
-        [HttpGet("services/{id}/is-starred")]
-        public async Task<IActionResult> IsServiceStarred(int id)
-        {
-            try
-            {
-                var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-                var isStarred = await _providerService.IsServiceStarredAsync(id, userId);
-                return Ok(new { isStarred });
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error checking if service is starred");
-                return StatusCode(500, new { message = "An error occurred while checking if the service is starred" });
-            }
-        }
     }
 
     public class ServiceDto
@@ -426,5 +354,11 @@ namespace Appointment_System.Controllers
         [Required]
         [Range(1, 100)]
         public int MaxConcurrentAppointments { get; set; } = 1;
+    }
+    
+    public class UpdateStatusDto
+    {
+        [Required]
+        public AppointmentStatus Status { get; set; }
     }
 } 
