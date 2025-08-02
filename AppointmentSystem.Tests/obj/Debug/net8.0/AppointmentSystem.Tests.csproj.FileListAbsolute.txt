@@ -427,3 +427,8 @@
 /Users/noah/Appointment System/AppointmentSystem.Tests/obj/Debug/net8.0/ref/AppointmentSystem.Tests.dll
 /Users/noah/Appointment System/AppointmentSystem.Tests/bin/Debug/net8.0/AspNet.Security.OAuth.GitHub.dll
 /Users/noah/Appointment System/AppointmentSystem.Tests/bin/Debug/net8.0/Microsoft.AspNetCore.Authentication.Google.dll
+/Users/noah/Appointment System/AppointmentSystem.Tests/bin/Debug/net8.0/Azure.Core.Amqp.dll
+/Users/noah/Appointment System/AppointmentSystem.Tests/bin/Debug/net8.0/Azure.Messaging.ServiceBus.dll
+/Users/noah/Appointment System/AppointmentSystem.Tests/bin/Debug/net8.0/Microsoft.Azure.Amqp.dll
+/Users/noah/Appointment System/AppointmentSystem.Tests/bin/Debug/net8.0/Microsoft.Extensions.Azure.dll
+/Users/noah/Appointment System/AppointmentSystem.Tests/bin/Debug/net8.0/Microsoft.Extensions.Configuration.Binder.dll

@@ -23,7 +23,7 @@ namespace Appointment_System.Services
         {
             _connectionString = configuration["ServiceBus:ConnectionString"] ?? 
                 throw new InvalidOperationException("Service Bus connection string is not configured");
-            _queueName = configuration["ServiceBus:QueueName"] ?? "messages";
+            _queueName = configuration["ServiceBus:QueueName"] ?? "appointease";
             _logger = logger;
         }
 
@@ -56,12 +56,12 @@ namespace Appointment_System.Services
                 // Send the message
                 await sender.SendMessageAsync(serviceBusMessage);
                 
-                _logger.LogInformation("Message sent to Service Bus: {MessageId} from {SenderId} to {ReceiverId}", 
-                    serviceBusMessage.MessageId, message.SenderId, message.ReceiverId);
+                _logger.LogInformation("Message sent to Service Bus queue {QueueName}: {MessageId} from {SenderId} to {ReceiverId}", 
+                    _queueName, serviceBusMessage.MessageId, message.SenderId, message.ReceiverId);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error sending message to Service Bus");
+                _logger.LogError(ex, "Error sending message to Service Bus queue {QueueName}", _queueName);
                 throw;
             }
         }

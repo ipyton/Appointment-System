@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Appointment_System.Services
 {
@@ -18,7 +19,7 @@ namespace Appointment_System.Services
         private readonly string _queueName;
         private readonly ILogger<ServiceBusConsumer> _logger;
         private readonly IHubContext<ChatHub> _hubContext;
-        private readonly IMessageService _messageService;
+        private readonly IServiceScopeFactory _serviceScopeFactory;
         private readonly ServiceBusClient _client;
         private readonly ServiceBusProcessor _processor;
 
@@ -26,14 +27,14 @@ namespace Appointment_System.Services
             IConfiguration configuration,
             ILogger<ServiceBusConsumer> logger,
             IHubContext<ChatHub> hubContext,
-            IMessageService messageService)
+            IServiceScopeFactory serviceScopeFactory)
         {
             _connectionString = configuration["ServiceBus:ConnectionString"] ?? 
                 throw new InvalidOperationException("Service Bus connection string is not configured");
             _queueName = configuration["ServiceBus:QueueName"] ?? "messages";
             _logger = logger;
             _hubContext = hubContext;
-            _messageService = messageService;
+            _serviceScopeFactory = serviceScopeFactory;
 
             // Create the clients that we'll use for sending and processing messages.
             _client = new ServiceBusClient(_connectionString);
@@ -98,6 +99,16 @@ namespace Appointment_System.Services
                     await _hubContext.Clients
                         .Group(groupName)
                         .SendAsync("ReceiveMessage", message);
+                    
+                    // Create a scope to resolve scoped services
+                    using (var scope = _serviceScopeFactory.CreateScope())
+                    {
+                        // Resolve the message service from the scope
+                        var messageService = scope.ServiceProvider.GetRequiredService<IMessageService>();
+                        
+                        // Persist the message if needed
+                        // await messageService.SaveMessageAsync(message);
+                    }
                     
                     _logger.LogInformation("Message forwarded to SignalR: From {SenderId} to {ReceiverId}", 
                         message.SenderId, message.ReceiverId);
